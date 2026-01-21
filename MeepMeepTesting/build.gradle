@@ -1,0 +1,19 @@
+plugins {
+    id 'java-library'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+repositories {
+    maven { url = 'https://maven.brott.dev/' }
+    maven { url = 'https://jitpack.io' }
+}
+
+dependencies {
+    implementation 'com.github.acmerobotics:MeepMeep:0.1.7'
+    // You MUST include RR core here for Pose2d to work in this module
+    implementation 'com.acmerobotics.roadrunner:core:1.0.1'
+}

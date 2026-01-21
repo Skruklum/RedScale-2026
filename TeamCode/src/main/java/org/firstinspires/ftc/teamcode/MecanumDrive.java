@@ -63,13 +63,13 @@ public final class MecanumDrive {
                 RevHubOrientationOnRobot.UsbFacingDirection.UP;
 
         // drive model parameters
-        public double inPerTick = 0.001;
+        public double inPerTick = 0.0009339339;
         public double lateralInPerTick = inPerTick;
-        public double trackWidthTicks = 0;
+        public double trackWidthTicks = 9639.386176697277;
 
         // feedforward parameters (in tick units)
-        public double kS = 0;
-        public double kV = 0;
+        public double kS = 1.6713335424967015;
+        public double kV = 0.00018576033406672958;
         public double kA = 0;
 
         // path profile parameters (in inches)
@@ -225,10 +225,10 @@ public final class MecanumDrive {
 
         // TODO: make sure your config has motors with these names (or change them)
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
-        leftFront = hardwareMap.get(DcMotorEx.class, "front_right_drive"); // DONE
+        leftFront = hardwareMap.get(DcMotorEx.class, "front_right_drive");
         leftBack = hardwareMap.get(DcMotorEx.class, "back_right_drive");
         rightBack = hardwareMap.get(DcMotorEx.class, "back_left_drive");
-        rightFront = hardwareMap.get(DcMotorEx.class, "front_left_drive"); // DONE BUT WRONG DIRECTION
+        rightFront = hardwareMap.get(DcMotorEx.class, "front_left_drive");
 
         leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -453,14 +453,14 @@ public final class MecanumDrive {
     public PoseVelocity2d updatePoseEstimate() {
         PoseVelocity2d vel = localizer.update();
         poseHistory.add(localizer.getPose());
-
+        
         while (poseHistory.size() > 100) {
             poseHistory.removeFirst();
         }
 
         estimatedPoseWriter.write(new PoseMessage(localizer.getPose()));
-
-
+        
+        
         return vel;
     }
 
