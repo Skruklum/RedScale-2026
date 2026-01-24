@@ -22,8 +22,9 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @TeleOp
-public class RsudAngleFix extends LinearOpMode {
+public class RsudAngleFixIniYangBenerCo extends LinearOpMode {
 
+    // ---------------- HARDWARE ----------------
     private DcMotorEx shooter;
     private DcMotor intake;
     private DcMotorEx turret;
@@ -33,9 +34,11 @@ public class RsudAngleFix extends LinearOpMode {
     private DcMotorEx frontLeft, frontRight, backLeft, backRight;
     private IMU imu;
 
+    // ---------------- VISION ----------------
     private AprilTagProcessor aprilTag;
     private VisionPortal visionPortal;
 
+    // ---------------- CONSTANTS ----------------
     static final double BARE_MOTOR_TICKS_PER_REV = 28.0;
     static final double TURRET_GEAR_RATIO = 4.75;
     static final double CORE_HEX_TICKS_PER_REV = 288.0 * TURRET_GEAR_RATIO;
@@ -45,22 +48,27 @@ public class RsudAngleFix extends LinearOpMode {
     static final int TURRET_LIMIT_TICKS =
             (int) ((TURRET_LIMIT_DEG / 360.0) * CORE_HEX_TICKS_PER_REV);
 
+    // ---------------- STATE VARIABLES ----------------
     boolean shooterOn = false;
     boolean lastTrigger = false;
+
+    boolean intakeOn = false;
+    boolean lastIntakeButton = false;
 
     @Override
     public void runOpMode() {
 
+        // ---------------- HARDWARE MAP ----------------
         turret      = hardwareMap.get(DcMotorEx.class, "shooterRot");
         degree      = hardwareMap.get(Servo.class, "shooterAd");
         intake      = hardwareMap.get(DcMotor.class, "intake");
         shooter     = hardwareMap.get(DcMotorEx.class, "shooter");
         stopperS    = hardwareMap.get(CRServo.class, "stopper");
 
-        frontLeft  = hardwareMap.get(DcMotorEx.class, "front_left_drive");
-        frontRight = hardwareMap.get(DcMotorEx.class, "front_right_drive");
-        backLeft   = hardwareMap.get(DcMotorEx.class, "back_left_drive");
-        backRight  = hardwareMap.get(DcMotorEx.class, "back_right_drive");
+        frontLeft   = hardwareMap.get(DcMotorEx.class, "front_left_drive");
+        frontRight  = hardwareMap.get(DcMotorEx.class, "front_right_drive");
+        backLeft    = hardwareMap.get(DcMotorEx.class, "back_left_drive");
+        backRight   = hardwareMap.get(DcMotorEx.class, "back_right_drive");
 
         imu = hardwareMap.get(IMU.class, "imu");
         imu.initialize(new IMU.Parameters(
@@ -69,9 +77,11 @@ public class RsudAngleFix extends LinearOpMode {
                         RevHubOrientationOnRobot.UsbFacingDirection.UP
                 )));
 
+        // ---------------- VISION INIT ----------------
         initAprilTag();
         setManualExposure(6, 250);
 
+        // ---------------- MOTOR DIRECTIONS ----------------
         frontLeft.setDirection(DcMotor.Direction.REVERSE);
         backLeft.setDirection(DcMotor.Direction.REVERSE);
         frontRight.setDirection(DcMotor.Direction.FORWARD);
@@ -80,22 +90,35 @@ public class RsudAngleFix extends LinearOpMode {
         shooter.setDirection(DcMotor.Direction.REVERSE);
         turret.setDirection(DcMotor.Direction.REVERSE);
 
+        // *** CHANGED FROM FORWARD TO REVERSE TO MATCH CODE 1 ***
+        intake.setDirection(DcMotor.Direction.REVERSE);
+
+        // ---------------- ENCODER SETUP ----------------
         turret.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         turret.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        telemetry.addLine("Ready to Start");
+        telemetry.update();
 
         waitForStart();
 
         while (opModeIsActive()) {
 
-            if (gamepad1.right_bumper) intake.setPower(1);
-            else if (gamepad1.left_bumper) intake.setPower(-1);
-            else intake.setPower(0);
+            // ===== INTAKE TOGGLE =====
+            boolean bumper = gamepad1.right_bumper;
+            if (bumper && !lastIntakeButton) {
+                intakeOn = !intakeOn;
+            }
+            lastIntakeButton = bumper;
+            intake.setPower(intakeOn ? 1.0 : 0.0);
 
+            // ===== SHOOTER TOGGLE =====
             boolean trigger = gamepad2.right_trigger > 0.2;
             if (trigger && !lastTrigger) shooterOn = !shooterOn;
             lastTrigger = trigger;
             shooter.setPower(shooterOn ? 1.0 : 0.0);
 
+            // ===== TURRET MANUAL / AUTO =====
             boolean manualOverride = false;
             if (gamepad2.right_bumper) {
                 turret.setPower(-1);
@@ -109,14 +132,17 @@ public class RsudAngleFix extends LinearOpMode {
                 updateCameraLogic();
             }
 
+            // ===== SHOOTER ANGLE SERVO =====
             if (gamepad2.x) setServoDegrees(0);
             else if (gamepad2.y) setServoDegrees(45);
             else if (gamepad2.b) setServoDegrees(90);
 
+            // ===== STOPPER =====
             if (gamepad2.dpad_right) stopperS.setPower(1);
             else if (gamepad2.dpad_left) stopperS.setPower(-1);
             else stopperS.setPower(0);
 
+            // ===== DRIVE =====
             double y = -gamepad1.left_stick_y;
             double x = -gamepad1.left_stick_x;
             double rx = -gamepad1.right_stick_x;
@@ -127,27 +153,35 @@ public class RsudAngleFix extends LinearOpMode {
             backLeft.setPower((y - x + rx) / max);
             backRight.setPower((y + x - rx) / max);
 
+            // ===== TELEMETRY =====
             int turretTicks = turret.getCurrentPosition();
             double turretDeg = (turretTicks / CORE_HEX_TICKS_PER_REV) * 360.0;
-            double shooterRPM =
-                    (shooter.getVelocity() * 60.0) / BARE_MOTOR_TICKS_PER_REV;
+            double shooterRPM = (shooter.getVelocity() * 60.0) / BARE_MOTOR_TICKS_PER_REV;
 
             List<AprilTagDetection> tags = aprilTag.getDetections();
 
-            telemetry.addData("Turret Ticks", turret.getCurrentPosition());
-
+            telemetry.addData("Turret Ticks", turretTicks);
             telemetry.addData("Turret Angle", "%.1f°", turretDeg);
             telemetry.addData("Tag Found", tags.size() > 0 ? "YES" : "NO");
             if (!tags.isEmpty()) {
-                telemetry.addData("Target X", "%.3f", tags.get(0).ftcPose.x);
+                // IMPORTANT: Only show X if the pose is valid to avoid crashing telemetry too
+                AprilTagDetection tag = tags.get(0);
+                if (tag.ftcPose != null) {
+                    telemetry.addData("Target X", "%.3f", tag.ftcPose.x);
+                } else {
+                    telemetry.addData("Target X", "UNKNOWN (Pose Null)");
+                }
             }
             telemetry.addData("Shooter", shooterOn ? "ON" : "OFF");
+            telemetry.addData("Intake", intakeOn ? "ON" : "OFF");
             telemetry.addData("RPM", "%.0f", shooterRPM);
             telemetry.update();
         }
 
         visionPortal.close();
     }
+
+    // ---------------- FUNCTIONS ----------------
 
     private void setServoDegrees(double deg) {
         degree.setPosition(Math.min(1.0, Math.max(0.0, deg / 180.0)));
@@ -174,18 +208,15 @@ public class RsudAngleFix extends LinearOpMode {
     private void setManualExposure(int exposureMS, int gain) {
         if (visionPortal == null) return;
 
-        while (!isStopRequested()
-                && visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING) {
+        while (!isStopRequested() && visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING) {
             sleep(20);
         }
 
-        ExposureControl exposureControl =
-                visionPortal.getCameraControl(ExposureControl.class);
+        ExposureControl exposureControl = visionPortal.getCameraControl(ExposureControl.class);
         exposureControl.setMode(ExposureControl.Mode.Manual);
         exposureControl.setExposure(exposureMS, TimeUnit.MILLISECONDS);
 
-        GainControl gainControl =
-                visionPortal.getCameraControl(GainControl.class);
+        GainControl gainControl = visionPortal.getCameraControl(GainControl.class);
         gainControl.setGain(gain);
     }
 
@@ -199,6 +230,16 @@ public class RsudAngleFix extends LinearOpMode {
         }
 
         AprilTagDetection tag = detections.get(0);
+
+        // =========================================================
+        // FIX: Check if ftcPose is null before accessing it
+        // This prevents the NullPointerException
+        // =========================================================
+        if (tag.ftcPose == null) {
+            turret.setPower(0);
+            return;
+        }
+
         double xError = tag.ftcPose.x;
 
         double power = clamp(-xError * TURRET_KP);
@@ -210,7 +251,6 @@ public class RsudAngleFix extends LinearOpMode {
     }
 
     private double clamp(double value) {
-        return Math.max(-TURRET_MAX_POWER,
-                Math.min(TURRET_MAX_POWER, value));
+        return Math.max(-TURRET_MAX_POWER, Math.min(TURRET_MAX_POWER, value));
     }
 }
