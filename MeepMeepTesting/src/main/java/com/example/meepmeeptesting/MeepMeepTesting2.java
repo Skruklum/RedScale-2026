@@ -16,16 +16,18 @@ public class MeepMeepTesting2 {
 
 
         myBot.runAction(myBot.getDrive().actionBuilder(new Pose2d(-70, 29, Math.toRadians(0)))
-                .splineTo(new Vector2d(-14.1, 4), Math.toRadians(90))
+                .splineTo(new Vector2d(-11, 4), Math.toRadians(90))
                 .waitSeconds(3)
                 .lineToY(60)
                 .lineToY(4)
                 .waitSeconds(3)
-                .splineTo(new Vector2d(12.2, 60.1), Math.toRadians(90))
-                .strafeTo(new Vector2d(-14.1, 4))
+                .splineTo(new Vector2d(15, 60), Math.toRadians(90))
+                .strafeTo(new Vector2d(-11, 4))
                 .waitSeconds(3)
-                .splineTo(new Vector2d(37.5, 60.1), Math.toRadians(90))
-                .strafeTo(new Vector2d(-14.1, 4))
+                //.splineTo(new Vector2d(37.5, 60), Math.toRadians(90))
+                .strafeTo(new Vector2d(36, 30))
+                .strafeTo(new Vector2d(36, 65))
+                .strafeTo(new Vector2d(-11, 4))
 
                 .waitSeconds(3)
 
