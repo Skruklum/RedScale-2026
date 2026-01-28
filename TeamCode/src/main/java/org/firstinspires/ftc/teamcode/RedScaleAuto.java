@@ -14,6 +14,8 @@ public class RedScaleAuto extends LinearOpMode {
         // Make sure the starting Pose matches your MeepMeep code exactly
         Pose2d initialPose = new Pose2d(-70, 29, Math.toRadians(0));
         MecanumDrive drive = new MecanumDrive(hardwareMap, initialPose);
+        Intake intake = new Intake(hardwareMap);
+        Shooter shooter = new Shooter(hardwareMap);
         waitForStart();
 
         if (isStopRequested()) return;
@@ -21,7 +23,8 @@ public class RedScaleAuto extends LinearOpMode {
         // Build and execute the action
         Actions.runBlocking(
                 drive.actionBuilder(initialPose)
-
+                        .afterTime(0, intake.setPower(1.0))
+                        .afterTime(0, shooter.setPower(1.0))
                         .splineTo(new Vector2d(-11, 4), Math.toRadians(90))
                         .waitSeconds(3)
                         .lineToY(60)
@@ -36,7 +39,8 @@ public class RedScaleAuto extends LinearOpMode {
                         .strafeTo(new Vector2d(-11, 4))
 
                         .waitSeconds(3)
-
+                        .stopAndAdd(intake.setPower(0))
+                        .stopAndAdd(shooter.setPower(0))
                         .build());
 
 
