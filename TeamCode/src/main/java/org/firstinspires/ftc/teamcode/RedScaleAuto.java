@@ -12,7 +12,7 @@ public class RedScaleAuto extends LinearOpMode {
     public void runOpMode() {
         // Initialize your MecanumDrive (this contains your 2-dead wheel localizer)
         // Make sure the starting Pose matches your MeepMeep code exactly
-        Pose2d initialPose = new Pose2d(-70, 29, Math.toRadians(90));
+        Pose2d initialPose = new Pose2d(-70, 29, Math.toRadians(0));
         MecanumDrive drive = new MecanumDrive(hardwareMap, initialPose);
         waitForStart();
 
@@ -21,14 +21,24 @@ public class RedScaleAuto extends LinearOpMode {
         // Build and execute the action
         Actions.runBlocking(
                 drive.actionBuilder(initialPose)
-                        .strafeTo(new Vector2d(-13, 29))
-                        .strafeTo(new Vector2d(-16, 0))
-                        .strafeTo(new Vector2d(13, 29))
-                        .strafeTo(new Vector2d(-16, 0))
-                        .strafeTo(new Vector2d(37, 29))
-                        .strafeTo(new Vector2d(-16, 0))
-                        .strafeTo(new Vector2d(39, 30))
-                        .build()
-        );
+
+                        .splineTo(new Vector2d(-11, 4), Math.toRadians(90))
+                        .waitSeconds(3)
+                        .lineToY(60)
+                        .lineToY(4)
+                        .waitSeconds(3)
+                        .splineTo(new Vector2d(15, 60), Math.toRadians(90))
+                        .strafeTo(new Vector2d(-11, 4))
+                        .waitSeconds(3)
+                        //.splineTo(new Vector2d(37.5, 60), Math.toRadians(90))
+                        .strafeTo(new Vector2d(36, 30))
+                        .strafeTo(new Vector2d(36, 65))
+                        .strafeTo(new Vector2d(-11, 4))
+
+                        .waitSeconds(3)
+
+                        .build());
+
+
     }
 }
