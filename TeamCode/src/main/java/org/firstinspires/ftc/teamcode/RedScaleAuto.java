@@ -6,7 +6,7 @@ import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-@Autonomous(name = "RR_Auto_Converted", group = "Autonomous")
+@Autonomous(name = "Red_Scale_Test_Auto", group = "Autonomous")
 public class RedScaleAuto extends LinearOpMode {
     @Override
     public void runOpMode() {
@@ -14,7 +14,6 @@ public class RedScaleAuto extends LinearOpMode {
         // Make sure the starting Pose matches your MeepMeep code exactly
         Pose2d initialPose = new Pose2d(-70, 29, Math.toRadians(90));
         MecanumDrive drive = new MecanumDrive(hardwareMap, initialPose);
-
         waitForStart();
 
         if (isStopRequested()) return;
