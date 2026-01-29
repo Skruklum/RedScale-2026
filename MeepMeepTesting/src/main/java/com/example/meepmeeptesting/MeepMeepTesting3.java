@@ -6,7 +6,7 @@ import com.noahbres.meepmeep.MeepMeep;
 import com.noahbres.meepmeep.roadrunner.DefaultBotBuilder;
 import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
 
-public class MeepMeepTesting2 {
+public class MeepMeepTesting3 {
     public static void main(String[] args) {
         MeepMeep meepMeep = new MeepMeep(800);
 
@@ -16,18 +16,11 @@ public class MeepMeepTesting2 {
 
 
         myBot.runAction(myBot.getDrive().actionBuilder(new Pose2d(-70, 29, Math.toRadians(90)))
-                .strafeTo(new Vector2d(-51, 4))
+                .strafeTo(new Vector2d(-51, 20))
                 .waitSeconds(3)
-                .splineTo(new Vector2d(12, 60), Math.toRadians(90))
-                .strafeTo(new Vector2d(-51, 4))
-                .waitSeconds(3)
-                //.splineTo(new Vector2d(37.5, 60), Math.toRadians(90))
-                .strafeTo(new Vector2d(35, 30))
-                .strafeTo(new Vector2d(35, 65))
-                .strafeTo(new Vector2d(-51, 4))
-
-                .waitSeconds(3)
-
+                .strafeTo(new Vector2d(-14, 28))
+                .strafeTo(new Vector2d(-14, 56))
+                .strafeTo(new Vector2d(-51, 20))
                 .build());
 
         meepMeep.setBackground(MeepMeep.Background.FIELD_DECODE_JUICE_DARK)

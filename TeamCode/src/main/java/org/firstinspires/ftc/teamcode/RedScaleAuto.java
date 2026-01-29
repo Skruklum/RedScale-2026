@@ -12,7 +12,7 @@ public class RedScaleAuto extends LinearOpMode {
     public void runOpMode() {
         // Initialize your MecanumDrive (this contains your 2-dead wheel localizer)
         // Make sure the starting Pose matches your MeepMeep code exactly
-        Pose2d initialPose = new Pose2d(-70, 29, Math.toRadians(0));
+        Pose2d initialPose = new Pose2d(-70, 29, Math.toRadians(90));
         MecanumDrive drive = new MecanumDrive(hardwareMap, initialPose);
         Intake intake = new Intake(hardwareMap);
         Shooter shooter = new Shooter(hardwareMap);
@@ -23,24 +23,21 @@ public class RedScaleAuto extends LinearOpMode {
         // Build and execute the action
         Actions.runBlocking(
                 drive.actionBuilder(initialPose)
-                        .afterTime(0, intake.setPower(1.0))
-                        .afterTime(0, shooter.setPower(1.0))
-                        .splineTo(new Vector2d(-11, 4), Math.toRadians(90))
+                        .strafeTo(new Vector2d(-51, 4))
                         .waitSeconds(3)
-                        .lineToY(60)
-                        .lineToY(4)
-                        .waitSeconds(3)
-                        .splineTo(new Vector2d(15, 60), Math.toRadians(90))
-                        .strafeTo(new Vector2d(-11, 4))
+                        .strafeTo(new Vector2d(-20, 30))
+                        .strafeTo(new Vector2d(-20, 65))
+                      //  .splineTo(new Vector2d(12, 60), Math.toRadians(90))
+                        .strafeTo(new Vector2d(-51, 4))
                         .waitSeconds(3)
                         //.splineTo(new Vector2d(37.5, 60), Math.toRadians(90))
-                        .strafeTo(new Vector2d(36, 30))
-                        .strafeTo(new Vector2d(36, 65))
-                        .strafeTo(new Vector2d(-11, 4))
+                        .strafeTo(new Vector2d(30, 30))
+                        .strafeTo(new Vector2d(30, 65))
+                        .strafeTo(new Vector2d(-51, 4))
+
 
                         .waitSeconds(3)
-                        .stopAndAdd(intake.setPower(0))
-                        .stopAndAdd(shooter.setPower(0))
+
                         .build());
 
 
