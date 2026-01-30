@@ -16,6 +16,7 @@ public class RedScaleAuto extends LinearOpMode {
         MecanumDrive drive = new MecanumDrive(hardwareMap, initialPose);
         Intake intake = new Intake(hardwareMap);
         Shooter shooter = new Shooter(hardwareMap);
+        Stopper stopper = new Stopper(hardwareMap);
         waitForStart();
 
         if (isStopRequested()) return;
@@ -23,16 +24,41 @@ public class RedScaleAuto extends LinearOpMode {
         // Build and execute the action
         Actions.runBlocking(
                 drive.actionBuilder(initialPose)
+                        .afterTime(0, shooter.setPower(1.0))
                         .strafeTo(new Vector2d(-51, 4))
-                        .waitSeconds(3)
-                        .strafeTo(new Vector2d(-20, 30))
+
+
+                        //SHOOTING PART 1
+                        .afterTime(0, intake.setPower(1.0))
+                        .afterTime(0, stopper.setPower(1.0))
+                        .waitSeconds(3.5)
+                        .afterTime(0, stopper.setPower(-1))
+                        .afterTime(0, intake.setPower(0))
+                        //
+
+
+                        .strafeTo(new Vector2d(-20  , 25))
+                        .afterTime(0, stopper.setPower(0))
+                        .afterTime(0, intake.setPower(1))
+
                         .strafeTo(new Vector2d(-20, 65))
-                      //  .splineTo(new Vector2d(12, 60), Math.toRadians(90))
+                        .afterTime(0, intake.setPower(0))
                         .strafeTo(new Vector2d(-51, 4))
-                        .waitSeconds(3)
+
+
+                        //SHOOTING PART 2
+                        .afterTime(0, intake.setPower(1.0))
+                        .afterTime(0, stopper.setPower(1.0))
+                        .waitSeconds(3.5)
+                        .afterTime(0, stopper.setPower(-1))
+                        .afterTime(0, intake.setPower(0))
+                        //
+
+
+
                         //.splineTo(new Vector2d(37.5, 60), Math.toRadians(90))
-                        .strafeTo(new Vector2d(30, 30))
-                        .strafeTo(new Vector2d(30, 65))
+                        .strafeTo(new Vector2d(28, 25))
+                        .strafeTo(new Vector2d(28, 65))
                         .strafeTo(new Vector2d(-51, 4))
 
 

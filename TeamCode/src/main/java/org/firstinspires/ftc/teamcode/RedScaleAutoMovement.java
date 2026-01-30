@@ -6,17 +6,16 @@ import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-@Autonomous(name = "Red_Scale_Test_Auto_Function_Tests", group = "Autonomous")
-public class RedScaleAutoFunctionTests extends LinearOpMode {
+@Autonomous(name = "Red_Scale_Test_Auto_Movement", group = "Autonomous")
+public class RedScaleAutoMovement extends LinearOpMode {
     @Override
     public void runOpMode() {
         // Initialize your MecanumDrive (this contains your 2-dead wheel localizer)
         // Make sure the starting Pose matches your MeepMeep code exactly
-        Pose2d initialPose = new Pose2d(-70, 29, Math.toRadians(0));
+        Pose2d initialPose = new Pose2d(-70, 29, Math.toRadians(90));
         MecanumDrive drive = new MecanumDrive(hardwareMap, initialPose);
         Intake intake = new Intake(hardwareMap);
         Shooter shooter = new Shooter(hardwareMap);
-        Stopper stopper = new Stopper(hardwareMap);
         waitForStart();
 
         if (isStopRequested()) return;
@@ -24,14 +23,21 @@ public class RedScaleAutoFunctionTests extends LinearOpMode {
         // Build and execute the action
         Actions.runBlocking(
                 drive.actionBuilder(initialPose)
-                        .afterTime(0, intake.setPower(1.0))
-                        .afterTime(0, shooter.setPower(1.0))
-                        .waitSeconds(1)
-                        .afterTime(0, stopper.setPower(1.0))
-                        .waitSeconds(2)
-                        .afterTime(0, stopper.setPower(0))
-                        .afterTime(0, intake.setPower(1.0))
-                        .waitSeconds(2)
+                        .strafeTo(new Vector2d(-51, 4))
+                        .waitSeconds(3)
+                        .strafeTo(new Vector2d(-20  , 40))
+                        .strafeTo(new Vector2d(-20, 65))
+                      //  .splineTo(new Vector2d(12, 60), Math.toRadians(90))
+                        .strafeTo(new Vector2d(-51, 4))
+                        .waitSeconds(3)
+                        //.splineTo(new Vector2d(37.5, 60), Math.toRadians(90))
+                        .strafeTo(new Vector2d(28, 40))
+                        .strafeTo(new Vector2d(28, 65))
+                        .strafeTo(new Vector2d(-51, 4))
+
+
+                        .waitSeconds(3)
+
                         .build());
 
 
