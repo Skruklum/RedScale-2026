@@ -24,14 +24,11 @@ public class RedScaleAutoFunctionTests extends LinearOpMode {
         // Build and execute the action
         Actions.runBlocking(
                 drive.actionBuilder(initialPose)
-                        .afterTime(0, intake.setPower(1.0))
-                        .afterTime(0, shooter.setPower(1.0))
-                        .waitSeconds(1)
-                        .afterTime(0, stopper.setPower(1.0))
-                        .waitSeconds(2)
-                        .afterTime(0, stopper.setPower(0))
+                        .stopAndAdd(shooter.setState(true))
+                        .stopAndAdd(stopper.timedPower(1.0))
                         .afterTime(0, intake.setPower(1.0))
                         .waitSeconds(2)
+                        .stopAndAdd(stopper.timedPower(-1.0))
                         .build());
 
 

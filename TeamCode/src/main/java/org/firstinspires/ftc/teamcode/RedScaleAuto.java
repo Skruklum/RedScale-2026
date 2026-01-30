@@ -24,33 +24,30 @@ public class RedScaleAuto extends LinearOpMode {
         // Build and execute the action
         Actions.runBlocking(
                 drive.actionBuilder(initialPose)
-                        .afterTime(0, shooter.setPower(1.0))
-                        .strafeTo(new Vector2d(-51, 4))
+                        .stopAndAdd(shooter.setState(true))
+                        .stopAndAdd(shooter.waitUntilReady())
+                        .afterTime(0, intake.setPower(1.0))
+                        .strafeTo(new Vector2d(-51, 10))
 
 
                         //SHOOTING PART 1
-                        .afterTime(0, intake.setPower(1.0))
-                        .afterTime(0, stopper.setPower(1.0))
-                        .waitSeconds(3.5)
-                        .afterTime(0, stopper.setPower(-1))
+                        .stopAndAdd(stopper.timedPower(1.0))
+                        .waitSeconds(2)
                         .afterTime(0, intake.setPower(0))
+                        .stopAndAdd(stopper.timedPower(-1.0))
                         //
 
 
                         .strafeTo(new Vector2d(-20  , 25))
-                        .afterTime(0, stopper.setPower(0))
                         .afterTime(0, intake.setPower(1))
-
                         .strafeTo(new Vector2d(-20, 65))
-                        .afterTime(0, intake.setPower(0))
-                        .strafeTo(new Vector2d(-51, 4))
+                        .strafeTo(new Vector2d(-51, 10))
 
 
                         //SHOOTING PART 2
-                        .afterTime(0, intake.setPower(1.0))
-                        .afterTime(0, stopper.setPower(1.0))
-                        .waitSeconds(3.5)
-                        .afterTime(0, stopper.setPower(-1))
+                        .stopAndAdd(stopper.timedPower(1.0))
+                        .waitSeconds(2)
+                        .stopAndAdd(stopper.timedPower(-1.0))
                         .afterTime(0, intake.setPower(0))
                         //
 
@@ -58,11 +55,17 @@ public class RedScaleAuto extends LinearOpMode {
 
                         //.splineTo(new Vector2d(37.5, 60), Math.toRadians(90))
                         .strafeTo(new Vector2d(28, 25))
+                        .afterTime(0, intake.setPower(1))
                         .strafeTo(new Vector2d(28, 65))
-                        .strafeTo(new Vector2d(-51, 4))
+                        .afterTime(0, intake.setPower(0))
+                        .strafeTo(new Vector2d(-45, 4))
 
 
-                        .waitSeconds(3)
+                        //SHOOTING PART 3
+                        .afterTime(0, intake.setPower(1.0))
+                        .stopAndAdd(stopper.timedPower(1.0))
+                        .waitSeconds(2)
+                        //
 
                         .build());
 

@@ -23,17 +23,17 @@ public class RedScaleAutoMovement extends LinearOpMode {
         // Build and execute the action
         Actions.runBlocking(
                 drive.actionBuilder(initialPose)
-                        .strafeTo(new Vector2d(-51, 4))
+                        .strafeTo(new Vector2d(-51, 10))
                         .waitSeconds(3)
-                        .strafeTo(new Vector2d(-20  , 40))
+                        .strafeTo(new Vector2d(-20  , 25))
                         .strafeTo(new Vector2d(-20, 65))
                       //  .splineTo(new Vector2d(12, 60), Math.toRadians(90))
-                        .strafeTo(new Vector2d(-51, 4))
+                        .strafeTo(new Vector2d(-51, 10))
                         .waitSeconds(3)
                         //.splineTo(new Vector2d(37.5, 60), Math.toRadians(90))
-                        .strafeTo(new Vector2d(28, 40))
+                        .strafeTo(new Vector2d(28, 25))
                         .strafeTo(new Vector2d(28, 65))
-                        .strafeTo(new Vector2d(-51, 4))
+                        .strafeTo(new Vector2d(-51, 10))
 
 
                         .waitSeconds(3)
