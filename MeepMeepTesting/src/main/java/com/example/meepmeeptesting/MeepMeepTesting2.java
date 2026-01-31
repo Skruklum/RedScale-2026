@@ -7,28 +7,36 @@ import com.noahbres.meepmeep.roadrunner.DefaultBotBuilder;
 import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
 
 public class MeepMeepTesting2 {
-    public static void main(String[] args) {
 
+    // Helper method to flip Y and Heading
+    public static Pose2d mirror(double x, double y, double degrees) {
+        return new Pose2d(x, -y, Math.toRadians(-degrees));
+    }
+
+    // Helper method for Vectors (position only)
+    public static Vector2d mirrorV(double x, double y) {
+        return new Vector2d(x, -y);
+    }
+
+    public static void main(String[] args) {
         MeepMeep meepMeep = new MeepMeep(800);
 
         RoadRunnerBotEntity myBot = new DefaultBotBuilder(meepMeep)
                 .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
                 .build();
 
-
-        myBot.runAction(myBot.getDrive().actionBuilder(new Pose2d(-70, 29, Math.toRadians(90)))
-                .strafeTo(new Vector2d(-51, 4))
+        // Using the mirror functions to flip the original path
+        myBot.runAction(myBot.getDrive().actionBuilder(mirror(-70, 29, 90))
+                .strafeTo(mirrorV(-51, 10))
                 .waitSeconds(3)
-                .splineTo(new Vector2d(12, 60), Math.toRadians(90))
-                .strafeTo(new Vector2d(-51, 4))
+                .strafeTo(mirrorV(-20, 25))
+                .strafeTo(mirrorV(-20, 65))
+                .strafeTo(mirrorV(-51, 10))
                 .waitSeconds(3)
-                //.splineTo(new Vector2d(37.5, 60), Math.toRadians(90))
-                .strafeTo(new Vector2d(35, 30))
-                .strafeTo(new Vector2d(35, 65))
-                .strafeTo(new Vector2d(-51, 4))
-
+                .strafeTo(mirrorV(28, 25))
+                .strafeTo(mirrorV(28, 65))
+                .strafeTo(mirrorV(-51, 10))
                 .waitSeconds(3)
-
                 .build());
 
         meepMeep.setBackground(MeepMeep.Background.FIELD_DECODE_JUICE_DARK)
