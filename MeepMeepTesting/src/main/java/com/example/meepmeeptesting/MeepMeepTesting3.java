@@ -16,11 +16,21 @@ public class MeepMeepTesting3 {
 
 
         myBot.runAction(myBot.getDrive().actionBuilder(new Pose2d(-70, 29, Math.toRadians(90)))
-                .strafeTo(new Vector2d(-51, 20))
+                .strafeTo(new Vector2d(-51, 4))
                 .waitSeconds(3)
-                .strafeTo(new Vector2d(-14, 28))
-                .strafeTo(new Vector2d(-14, 56))
-                .strafeTo(new Vector2d(-51, 20))
+                .strafeTo(new Vector2d(-20, 30))
+                .strafeTo(new Vector2d(-20, 65))
+                //  .splineTo(new Vector2d(12, 60), Math.toRadians(90))
+                .strafeTo(new Vector2d(-51, 4))
+                .waitSeconds(3)
+                //.splineTo(new Vector2d(37.5, 60), Math.toRadians(90))
+                .strafeTo(new Vector2d(30, 30))
+                .strafeTo(new Vector2d(30, 65))
+                .strafeTo(new Vector2d(-51, 4))
+
+
+                .waitSeconds(3)
+
                 .build());
 
         meepMeep.setBackground(MeepMeep.Background.FIELD_DECODE_JUICE_DARK)
