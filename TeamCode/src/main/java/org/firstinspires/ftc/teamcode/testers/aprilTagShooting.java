@@ -196,6 +196,19 @@ public class aprilTagShooting extends OpMode {
         lastDpadDown = currentDpadDown;
 
 
+        // --- Turret / Auto Aim ---
+        if (gamepad2.square && !gamepad2_isSquareClicked) {
+            isAutoAim = !isAutoAim;
+            if(isAutoAim) {
+                // Lock heading on enable
+                double robotYaw = normalizeAngle(imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) - yawOffset);
+                double turretDeg = turretMotor.getCurrentPosition() / TICKS_PER_DEGREE;
+                targetWorldAngle = normalizeAngle(robotYaw + turretDeg);
+            }
+            gamepad2_isSquareClicked = true;
+        } else if (!gamepad2.square) {
+            gamepad2_isSquareClicked = false;
+        }
 
         double robotYaw = normalizeAngle(imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) - yawOffset);
         double turretTicks = turretMotor.getCurrentPosition();
@@ -304,7 +317,7 @@ public class aprilTagShooting extends OpMode {
     }
 
     private void initVision() {
-        Position cameraPosition = new Position(DistanceUnit.CM, 0, 6,43, 0);
+        Position cameraPosition = new Position(DistanceUnit.CM, cmToInch(-21.5), mmToInch(39.11),cmToInch(41), 0);
         YawPitchRollAngles cameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES,0, 0, 0,0);
         aprilTag = new AprilTagProcessor.Builder().setCameraPose(cameraPosition, cameraOrientation).setDrawTagOutline(true).setDrawTagID(true).build();
         aprilTag.setDecimation(DECIMATION_SEARCH);
@@ -341,6 +354,25 @@ public class aprilTagShooting extends OpMode {
      */
     public double inchToCm(double inch) {
         return inch * 2.54;
+    }
+
+    /**
+     * Converts a measurement from inches to centimeters.
+     * @param cm The value in inches.
+     * @return The value converted to centimeters.
+     */
+    public double cmToInch(double cm) {
+        return cm / 2.54;
+    }
+
+    /**
+     * Converts a measurement from inches to centimeters.
+     * @param mm The value in inches.
+     * @return The value converted to centimeters.
+     */
+    public double mmToInch(double mm) {
+        double cm = mm / 10;
+        return cm / 2.54;
     }
 
 }

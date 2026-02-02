@@ -328,7 +328,7 @@ public class aprilTagTracking extends OpMode {
     }
 
     private void initVision() {
-        Position cameraPosition = new Position(DistanceUnit.CM, 0, 6,43, 0);
+        Position cameraPosition = new Position(DistanceUnit.CM, cmToInch(-21.5), mmToInch(39.11),cmToInch(41), 0);
         YawPitchRollAngles cameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES,0, 0, 0,0);
         aprilTag = new AprilTagProcessor.Builder().setCameraPose(cameraPosition, cameraOrientation).setDrawTagOutline(true).setDrawTagID(true).build();
         aprilTag.setDecimation(DECIMATION_SEARCH);
@@ -356,5 +356,33 @@ public class aprilTagTracking extends OpMode {
         }
         public void onDrawFrame(Canvas canvas, int onscreenWidth, int onscreenHeight, float scaleBmpPxToCanvasPx, float scaleCanvasDensity, Object userContext) {}
         public void getFrameBitmap(Continuation<? extends Consumer<Bitmap>> continuation) { continuation.dispatch(bitmapConsumer -> bitmapConsumer.accept(lastFrame.get())); }
+    }
+
+    /**
+     * Converts a measurement from inches to centimeters.
+     * @param inch The value in inches.
+     * @return The value converted to centimeters.
+     */
+    public double inchToCm(double inch) {
+        return inch * 2.54;
+    }
+
+    /**
+     * Converts a measurement from inches to centimeters.
+     * @param cm The value in inches.
+     * @return The value converted to centimeters.
+     */
+    public double cmToInch(double cm) {
+        return cm / 2.54;
+    }
+
+    /**
+     * Converts a measurement from inches to centimeters.
+     * @param mm The value in inches.
+     * @return The value converted to centimeters.
+     */
+    public double mmToInch(double mm) {
+        double cm = mm / 10;
+        return cm / 2.54;
     }
 }
