@@ -11,7 +11,7 @@ public class MeepMeepTesting2 {
         MeepMeep meepMeep = new MeepMeep(800);
 
         RoadRunnerBotEntity myBot = new DefaultBotBuilder(meepMeep)
-                .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
+                .setConstraints(200, 80, Math.toRadians(180), Math.toRadians(180), 15)
                 .build();
 
 
