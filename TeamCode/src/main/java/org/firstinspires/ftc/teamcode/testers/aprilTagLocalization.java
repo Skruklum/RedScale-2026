@@ -7,6 +7,7 @@ import android.util.Size;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
@@ -31,6 +32,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.robotcore.external.stream.CameraStreamSource;
 import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibration;
+import org.firstinspires.ftc.teamcode.Drawing;
 import org.firstinspires.ftc.teamcode.MecanumDrive;
 import org.firstinspires.ftc.teamcode.controllers.PIDCoefficients;
 import org.firstinspires.ftc.teamcode.controllers.PIDFController;
@@ -201,6 +203,20 @@ public class aprilTagLocalization extends OpMode {
 
 
 
+        // --- Turret / Auto Aim ---
+        if (gamepad2.square && !gamepad2_isSquareClicked) {
+            isAutoAim = !isAutoAim;
+            if(isAutoAim) {
+                // Lock heading on enable
+                double robotYaw = normalizeAngle(imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) - yawOffset);
+                double turretDeg = turretMotor.getCurrentPosition() / TICKS_PER_DEGREE;
+                targetWorldAngle = normalizeAngle(robotYaw + turretDeg);
+            }
+            gamepad2_isSquareClicked = true;
+        } else if (!gamepad2.square) {
+            gamepad2_isSquareClicked = false;
+        }
+
         double robotYaw = normalizeAngle(imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) - yawOffset);
         double turretTicks = turretMotor.getCurrentPosition();
         double turretDegrees = turretTicks / TICKS_PER_DEGREE;
@@ -279,16 +295,16 @@ public class aprilTagLocalization extends OpMode {
 
 
         if (tagVisible) {
-            ShooterSolution shooterSolution = shooterController.getBestShootingSolution(inchToCm(AprilTagDistance), 98.5);
-            shooterAd.setPosition(shooterController.angleToServo(shooterSolution.bestAngle));
-            double targetVelocityTicks = shooterController.rpmToVelocityTicks(shooterSolution.targetRPM);
-            shooterMotor.setVelocity(targetVelocityTicks);
-
-
-            double SHOOTER_RPM = shooterMotor.getVelocity() / SHOOTER_MOTOR_COUNTS_PER_REV * 60;
-
-            telemetry.addData("SHOOTER VELOCITY", shooterMotor.getVelocity());
-            telemetry.addData("SHOOTER RPM", SHOOTER_RPM);
+//            ShooterSolution shooterSolution = shooterController.getBestShootingSolution(inchToCm(AprilTagDistance), 98.5);
+//            shooterAd.setPosition(shooterController.angleToServo(shooterSolution.bestAngle));
+//            double targetVelocityTicks = shooterController.rpmToVelocityTicks(shooterSolution.targetRPM);
+//            shooterMotor.setVelocity(targetVelocityTicks);
+//
+//
+//            double SHOOTER_RPM = shooterMotor.getVelocity() / SHOOTER_MOTOR_COUNTS_PER_REV * 60;
+//
+//            telemetry.addData("SHOOTER VELOCITY", shooterMotor.getVelocity());
+//            telemetry.addData("SHOOTER RPM", SHOOTER_RPM);
 
 
         }
@@ -304,6 +320,14 @@ public class aprilTagLocalization extends OpMode {
         telemetry.addData("MODE", isAutoAim ? (tagVisible ? "AUTO (VISION)" : "AUTO (GYRO)") : "MANUAL");
         telemetry.addData("PID", isAutoAim ? (usingVisionGains ? "Vision" : "Gyro") : "Manual");
         telemetry.update();
+
+        Pose2d pose = mecanumDrive.localizer.getPose();
+
+
+        TelemetryPacket packet = new TelemetryPacket();
+        packet.fieldOverlay().setStroke("#3F51B5");
+        Drawing.drawRobot(packet.fieldOverlay(), pose);
+        FtcDashboard.getInstance().sendTelemetryPacket(packet);
     }
 
     @Override
@@ -327,7 +351,7 @@ public class aprilTagLocalization extends OpMode {
     }
 
     private void initVision() {
-        Position cameraPosition = new Position(DistanceUnit.CM, 0, 6,43, 0);
+        Position cameraPosition = new Position(DistanceUnit.CM, cmToInch(-21.5), mmToInch(39.11),cmToInch(41), 0);
         YawPitchRollAngles cameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES,0, 0, 0,0);
         aprilTag = new AprilTagProcessor.Builder().setCameraPose(cameraPosition, cameraOrientation).setDrawTagOutline(true).setDrawTagID(true).build();
         aprilTag.setDecimation(DECIMATION_SEARCH);
@@ -364,6 +388,25 @@ public class aprilTagLocalization extends OpMode {
      */
     public double inchToCm(double inch) {
         return inch * 2.54;
+    }
+
+    /**
+     * Converts a measurement from inches to centimeters.
+     * @param cm The value in inches.
+     * @return The value converted to centimeters.
+     */
+    public double cmToInch(double cm) {
+        return cm / 2.54;
+    }
+
+    /**
+     * Converts a measurement from inches to centimeters.
+     * @param mm The value in inches.
+     * @return The value converted to centimeters.
+     */
+    public double mmToInch(double mm) {
+        double cm = mm / 10;
+        return cm / 2.54;
     }
 
 }

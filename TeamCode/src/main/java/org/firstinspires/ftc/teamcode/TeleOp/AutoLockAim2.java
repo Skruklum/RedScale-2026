@@ -16,13 +16,14 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.teamcode.controllers.PIDCoefficients;
 import org.firstinspires.ftc.teamcode.controllers.PIDFController;
+import org.firstinspires.ftc.teamcode.controllers.RobotPoseController;
 
 @TeleOp(name = "Auto Lock Aim v2 (Clamped)", group = "Competition")
 public class AutoLockAim2 extends LinearOpMode {
 
     // --- HARDWARE ---
     private DcMotorEx leftMotor, rightMotor, turretMotor;
-    private IMU imu;
+    private RobotPoseController robotPoseController;
 
     // --- PID TUNING ---
     // Start with P=0.03. Increase if sluggish. D=0.001 stops oscillation.
@@ -50,8 +51,12 @@ public class AutoLockAim2 extends LinearOpMode {
     private double yawOffset = 0; // To reset IMU zero
     private DcMotorEx frontLeft, frontRight, backLeft, backRight;
 
+    private IMU imu;
+
+
     @Override
     public void runOpMode() {
+        robotPoseController = new RobotPoseController(hardwareMap);
         // --- INIT HARDWARE ---
 //        leftMotor = hardwareMap.get(DcMotorEx.class, "left");
 //        rightMotor = hardwareMap.get(DcMotorEx.class, "right");
