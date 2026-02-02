@@ -40,27 +40,28 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Config
-@TeleOp(name ="April Tag Tracking Test FIXED", group = "Test")
+@TeleOp(name ="AprilTag AutoAim CENTER + LIMITER", group = "Test")
 public class AprilTagTracking2Agi extends OpMode {
 
-    /* ================== CONSTANTS ================== */
-
+    /* ================== PID ================== */
     public static PIDCoefficients pidVision = new PIDCoefficients(0.015, 0, 0.7);
     public static PIDCoefficients pidGyro   = new PIDCoefficients(0.035, 0, 0.001);
 
+    /* ================== TURRET ================== */
     private static final double MAX_TURRET_ANGLE_POSITIVE = 170;
     private static final double MAX_TURRET_ANGLE_NEGATIVE = -150;
     private static final double TICKS_PER_DEGREE = 2.838;
 
+    /* ================== VISION ================== */
+    public static double BEARING_CENTER = 1.5;
+    private static final double SMOOTHING_ALPHA = 0.2;
+
+    /* ================== CAMERA ================== */
     private static final long EXPOSURE_MS = 6;
     private static final int CAMERA_GAIN = 250;
     private static final float DECIMATION_SEARCH = 2.0f;
-    private static final double SMOOTHING_ALPHA = 0.2;
 
     public static int RED_GOAL_TAG_ID = 20;
-    public static int BLUE_GOAL_TAG_ID = 24;
-
-    /* ================== STATE ================== */
 
     enum AimState {
         SNAP_TO_BEARING,
@@ -69,40 +70,37 @@ public class AprilTagTracking2Agi extends OpMode {
 
     private AimState aimState = AimState.SNAP_TO_BEARING;
 
-    private double targetWorldAngle = 0;
-    private double smoothedBearing = 0;
-    private double yawOffset = 0;
-
-    private boolean isAutoAim = false;
-    private boolean usingVisionGains = false;
-    private boolean lastSquare = false;
-
-    private int activeGoalTagId = RED_GOAL_TAG_ID;
-    private boolean isRedAlliance = true;
-
     /* ================== HARDWARE ================== */
-
     private DcMotorEx turretMotor;
     private DcMotorEx frontLeft, frontRight, backLeft, backRight;
     private IMU imu;
 
     /* ================== VISION ================== */
-
     private VisionPortal visionPortal;
     private AprilTagProcessor aprilTag;
     private final CameraStreamProcessor streamProcessor = new CameraStreamProcessor();
 
+    /* ================== STATE ================== */
     private PIDFController turretPID = new PIDFController(pidGyro);
+    private boolean usingVisionGains = false;
+
+    private boolean isAutoAim = false;
+    private boolean lastSquare = false;
+    private boolean isAtLimit = false;
+
+    private double yawOffset = 0;
+    private double targetWorldAngle = 0;
+    private double smoothedBearingError = 0;
 
     /* ================== INIT ================== */
-
     @Override
     public void init() {
-        FtcDashboard dashboard = FtcDashboard.getInstance();
-        telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
+        telemetry = new MultipleTelemetry(
+                telemetry,
+                FtcDashboard.getInstance().getTelemetry()
+        );
 
         turretMotor = hardwareMap.get(DcMotorEx.class, "shooterRot");
-
         frontLeft  = hardwareMap.get(DcMotorEx.class, "front_left_drive");
         frontRight = hardwareMap.get(DcMotorEx.class, "front_right_drive");
         backLeft   = hardwareMap.get(DcMotorEx.class, "back_left_drive");
@@ -137,7 +135,6 @@ public class AprilTagTracking2Agi extends OpMode {
     }
 
     /* ================== LOOP ================== */
-
     @Override
     public void loop() {
 
@@ -163,30 +160,33 @@ public class AprilTagTracking2Agi extends OpMode {
                 imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) - yawOffset
         );
 
-        double turretDeg = turretMotor.getCurrentPosition() / TICKS_PER_DEGREE;
+        double turretTicks = turretMotor.getCurrentPosition();
+        double turretDeg = turretTicks / TICKS_PER_DEGREE;
         double turretAbs = normalizeAngle(robotYaw + turretDeg);
 
         boolean tagVisible = false;
+        double rawBearing = 0;
+        double bearingError = 0;
 
         if (isAutoAim) {
             List<AprilTagDetection> detections = aprilTag.getDetections();
 
             for (AprilTagDetection d : detections) {
-                if (d.metadata != null && d.id == activeGoalTagId) {
-
+                if (d.metadata != null && d.id == RED_GOAL_TAG_ID) {
                     tagVisible = true;
 
-                    double bearing = d.ftcPose.bearing; // + kiri, - kanan
+                    rawBearing = d.ftcPose.bearing;
+                    bearingError = rawBearing - BEARING_CENTER;
 
-                    smoothedBearing =
-                            bearing * SMOOTHING_ALPHA +
-                                    smoothedBearing * (1.0 - SMOOTHING_ALPHA);
+                    smoothedBearingError =
+                            bearingError * SMOOTHING_ALPHA +
+                                    smoothedBearingError * (1.0 - SMOOTHING_ALPHA);
 
                     if (aimState == AimState.SNAP_TO_BEARING) {
                         targetWorldAngle =
-                                normalizeAngle(turretAbs + smoothedBearing);
+                                normalizeAngle(turretAbs + smoothedBearingError);
 
-                        if (Math.abs(smoothedBearing) < 1.0) {
+                        if (Math.abs(smoothedBearingError) < 0.5) {
                             aimState = AimState.LOCK_WORLD;
                         }
                     }
@@ -199,50 +199,66 @@ public class AprilTagTracking2Agi extends OpMode {
                 }
             }
 
-            if (!tagVisible) {
-                aimState = AimState.SNAP_TO_BEARING;
-            }
-
-            double error = normalizeAngle(targetWorldAngle - robotYaw);
-
-            error = Range.clip(
-                    error,
+            double errorDeg = normalizeAngle(targetWorldAngle - robotYaw);
+            errorDeg = Range.clip(
+                    errorDeg,
                     MAX_TURRET_ANGLE_NEGATIVE,
                     MAX_TURRET_ANGLE_POSITIVE
             );
 
-            turretPID.targetPosition = error * TICKS_PER_DEGREE;
-            double power = turretPID.update(turretMotor.getCurrentPosition());
-            turretMotor.setPower(Range.clip(power, -1.0, 1.0));
+            turretPID.targetPosition = errorDeg * TICKS_PER_DEGREE;
+            double power = turretPID.update(turretTicks);
 
-        } else {
-            turretMotor.setPower(-gamepad2.right_stick_x * 0.6);
+            /* ===== LIMITER ===== */
+            if (turretDeg > MAX_TURRET_ANGLE_POSITIVE && power > 0) {
+                power = 0;
+                isAtLimit = true;
+            }
+            else if (turretDeg < MAX_TURRET_ANGLE_NEGATIVE && power < 0) {
+                power = 0;
+                isAtLimit = true;
+            }
+            else {
+                isAtLimit = false;
+            }
+
+            turretMotor.setPower(Range.clip(power, -1.0, 1.0));
+        }
+        else {
+            double manual = -gamepad2.right_stick_x * 0.6;
+
+            if (turretDeg > MAX_TURRET_ANGLE_POSITIVE && manual > 0) manual = 0;
+            if (turretDeg < MAX_TURRET_ANGLE_NEGATIVE && manual < 0) manual = 0;
+
+            turretMotor.setPower(manual);
+            isAtLimit = false;
         }
 
+        /* ================== TELEMETRY ================== */
         telemetry.addLine("===== AUTO AIM DEBUG =====");
-
         telemetry.addData("AutoAim", isAutoAim);
         telemetry.addData("AimState", aimState);
+        telemetry.addData("AtLimit", isAtLimit);
 
         telemetry.addLine("----- ANGLES -----");
-        telemetry.addData("RobotYaw (deg)", robotYaw);
-        telemetry.addData("TurretDeg (rel)", turretDeg);
-        telemetry.addData("TurretAbs (world)", turretAbs);
+        telemetry.addData("RobotYaw", robotYaw);
+        telemetry.addData("TurretDeg", turretDeg);
+        telemetry.addData("TurretAbs", turretAbs);
         telemetry.addData("TargetWorld", targetWorldAngle);
 
         telemetry.addLine("----- VISION -----");
         telemetry.addData("TagVisible", tagVisible);
-        telemetry.addData("ActiveTagID", activeGoalTagId);
-        telemetry.addData("RawBearing", smoothedBearing); // already filtered
+        telemetry.addData("RawBearing", rawBearing);
+        telemetry.addData("BearingCenter", BEARING_CENTER);
+        telemetry.addData("BearingError", bearingError);
+        telemetry.addData("SmoothedError", smoothedBearingError);
 
         telemetry.addLine("----- PID -----");
         telemetry.addData("PID Mode", usingVisionGains ? "VISION" : "GYRO");
-        telemetry.addData("Error (deg)", normalizeAngle(targetWorldAngle - robotYaw));
         telemetry.addData("PID Target (ticks)", turretPID.targetPosition);
-        telemetry.addData("TurretTicks", turretMotor.getCurrentPosition());
+        telemetry.addData("TurretTicks", turretTicks);
 
         telemetry.update();
-
     }
 
     @Override
@@ -251,7 +267,6 @@ public class AprilTagTracking2Agi extends OpMode {
     }
 
     /* ================== UTILS ================== */
-
     private double normalizeAngle(double a) {
         while (a > 180) a -= 360;
         while (a <= -180) a += 360;
