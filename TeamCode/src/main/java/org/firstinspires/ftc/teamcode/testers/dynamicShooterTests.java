@@ -10,6 +10,8 @@ import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.teamcode.controllers.ShooterController;
+
 import java.lang.reflect.Array;
 
 @TeleOp(name = "Dynamic Shooting Test", group = "Test")
@@ -49,6 +51,7 @@ public class dynamicShooterTests  extends OpMode {
 
     private DcMotorEx frontLeft, frontRight, backLeft, backRight, intake;
     private Servo shooterAd;
+    private ShooterController shooterController;
 
 
     @Override
@@ -77,7 +80,7 @@ public class dynamicShooterTests  extends OpMode {
         PIDFCoefficients currentPIDF = new PIDFCoefficients(20, 0, 0, 14.5);
         shooterMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, currentPIDF);
 
-
+        shooterController = new ShooterController();
 
         telemetry.addLine("Finish Initializing Camera..");
         telemetry.update();
@@ -186,12 +189,12 @@ public class dynamicShooterTests  extends OpMode {
 
         telemetry.addData("SHOOTER VELOCITY", shooterMotor.getVelocity());
         telemetry.addData("SHOOTER RPM", SHOOTER_RPM);
-        telemetry.addData("SHOOTER Velocity", rpmToVelocityCmS(SHOOTER_RPM, SHOOTER_WHEEL_RADIUS));
+        telemetry.addData("SHOOTER Velocity", shooterController.rpmToVelocityCmS(SHOOTER_RPM, SHOOTER_WHEEL_RADIUS));
 
         telemetry.addData("SHOOTER TARGET ANGLE", currentShooterAngle);
-        telemetry.addData("SHOOTER TARGET ANGLE POS", angleToServo(currentShooterAngle));
+        telemetry.addData("SHOOTER TARGET ANGLE POS", shooterController.angleToServo(currentShooterAngle));
         telemetry.addData("SHOOTER TARGET DISTANCE", currentShootingDistance);
-        shooterAd.setPosition(angleToServo(currentShooterAngle));
+        shooterAd.setPosition(shooterController.angleToServo(currentShooterAngle));
 
 
 
@@ -203,8 +206,8 @@ public class dynamicShooterTests  extends OpMode {
             telemetry.addLine("=========================");
             telemetry.addLine("getTargetRPM by distance & angle");
 
-            double taretRPM = getTargetRPM(currentShootingDistance, currentShooterAngle, 98.5);
-            double targetVelocityTicks = rpmToVelocityTicks(taretRPM);
+            double taretRPM = shooterController.getTargetRPM(currentShootingDistance, currentShooterAngle, 98.5);
+            double targetVelocityTicks = shooterController.rpmToVelocityTicks(taretRPM);
             telemetry.addData("SHOOTER TARGET RPM", taretRPM);
             telemetry.addData("SHOOTER VELOCITY TICKS", targetVelocityTicks);
             shooterMotor.setVelocity(targetVelocityTicks);
@@ -235,112 +238,10 @@ public class dynamicShooterTests  extends OpMode {
 
     }
 
-    private double doubleIncToCM(double inch) {
-        return inch * 2.54;
-    }
-    public double angleToServo(double targetAngle) {
-        // Calibration points
-        double angleMin = 23.0;
-        double posMin = 0.0;
-        double angleMax = 38.0;
-        double posMax = 0.6415;
-
-        // Linear Interpolation Formula:
-        // y = y1 + (x - x1) * (y2 - y1) / (x2 - x1)
-        double position = posMin + (targetAngle - angleMin) * (posMax - posMin) / (angleMax - angleMin);
-
-        // Clamp the value to ensure it stays within your mechanical limits [0, 0.6415]
-        if (position < posMin) return posMin;
-        if (position > posMax) return posMax;
-
-        return position;
-    }
 
 
-    // Convert flywheel RPM to velocity ticks
-    public double rpmToVelocityTicks(double rpm) {
-        return rpm /  60 * SHOOTER_MOTOR_COUNTS_PER_REV;
-    }
 
-    // Convert flywheel RPM to surface velocity in cm/s
-    public double rpmToVelocityCmS(double rpm, double wheelRadiusCm) {
-        double circumference = 2 * Math.PI * wheelRadiusCm; // cm
-        double revPerSecond = rpm / 60.0;
-        return circumference * revPerSecond;
-    }
 
-    public double getTargetRPM(double distanceCm, double angleDegrees, double targetHeightCm) {
-        double g = 980.665; // Gravity in cm/s^2
-        double h0 = SHOOTER_HEIGHT;    // Flywheel height in cm
-        double angleRad = Math.toRadians(angleDegrees);
-
-        // 1. Calculate required launch velocity (v0) in cm/s
-        double numerator = g * Math.pow(distanceCm, 2);
-        double denominator = 2 * Math.pow(Math.cos(angleRad), 2) *
-                (distanceCm * Math.tan(angleRad) + h0 - targetHeightCm);
-
-        // If target is physically unreachable at this angle, return 0
-        if (denominator <= 0) return 0;
-        double v0 = Math.sqrt(numerator / denominator);
-
-        // 2. Convert Velocity (cm/s) to RPM
-        // Formula: RPM = (v0 / (2 * PI * R)) * 60 / Efficiency
-        double circumference = 2 * Math.PI * SHOOTER_WHEEL_RADIUS;
-        double rps = v0 / circumference;
-        double targetRPM = (rps * 60) / SHOOTER_EFFICIENCY;
-
-        // 3. Cap at your motor's 4500 RPM max
-        return Math.min(targetRPM, 4500.0);
-    }
-
-    // Get required launch angle (degrees) at a fixed velocity and distance
-    public double getRequiredAngleDeg(double distanceCm,
-                                      double targetHeightCm,
-                                      double launchVelocityCmS) {
-        double g = 980.665; // cm/s^2
-        double h0 = SHOOTER_HEIGHT;   // launcher height in cm
-        double x = distanceCm;
-        double y = targetHeightCm - h0;
-        double v = launchVelocityCmS;
-
-        double termInsideSqrt =
-                Math.pow(v, 4) - g * (g * x * x + 2 * y * v * v);
-
-        // unreachable if negative
-        if (termInsideSqrt < 0) {
-            return -1; // signal "no solution"
-        }
-
-        // low (flatter) trajectory solution
-        double sqrtTerm = Math.sqrt(termInsideSqrt);
-        double tanTheta = (v * v - sqrtTerm) / (g * x);
-        double angleRad = Math.atan(tanTheta);
-
-        return Math.toDegrees(angleRad);
-    }
-
-    /**
-     * Converts motor encoder ticks per second into physical launch velocity (cm/s).
-     * @param currentTPS The value from motor.getVelocity().
-     * @param ticksPerRev The TPR of your motor (e.g., 28 for 1:1 gear ratio).
-     * @return The estimated launch velocity in cm/s.
-     */
-    public double ticksToVelocityCmS(double currentTPS, double ticksPerRev) {
-        // 1. Calculate how many rotations the motor is doing per second
-        double rotationsPerSecond = currentTPS / ticksPerRev;
-
-        // 2. Calculate the circumference of the flywheel (cm)
-        double circumference = 2 * Math.PI * SHOOTER_WHEEL_RADIUS;
-
-        // 3. Physical surface velocity (cm/s)
-        double surfaceVelocity = rotationsPerSecond * circumference;
-
-        // 4. Adjust for efficiency/slip (estimated 85%)
-        // This represents the actual speed the ball leaves the shooter
-        double efficiencyFactor = 0.85;
-
-        return surfaceVelocity * efficiencyFactor;
-    }
 
     /**
      * Converts a measurement from inches to centimeters.

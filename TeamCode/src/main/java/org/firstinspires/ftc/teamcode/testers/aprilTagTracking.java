@@ -270,13 +270,15 @@ public class aprilTagTracking extends OpMode {
 
 
                     tagVisible = true;
-                    double bearingError = VISION_DIRECTION * (d.ftcPose.bearing - CAMERA_OFFSET);
-                    smoothedBearing = (bearingError * SMOOTHING_ALPHA) + (smoothedBearing * (1.0 - SMOOTHING_ALPHA));
+                    // MAKE A PROPER ALGORITHM ..
 
-                    double currentAbsoluteLook = normalizeAngle(robotYaw + turretDegrees);
-                    if (Math.abs(smoothedBearing) > 0.5) {
-                        targetWorldAngle = normalizeAngle(currentAbsoluteLook - smoothedBearing);
-                    }
+//                    double bearingError = VISION_DIRECTION * (d.ftcPose.bearing - CAMERA_OFFSET);
+//                    smoothedBearing = (bearingError * SMOOTHING_ALPHA) + (smoothedBearing * (1.0 - SMOOTHING_ALPHA));
+//
+//                    double currentAbsoluteLook = normalizeAngle(robotYaw + turretDegrees);
+//                    if (Math.abs(smoothedBearing) > 0.5) {
+//                        targetWorldAngle = normalizeAngle(currentAbsoluteLook - smoothedBearing);
+//                    }
                     break;
                 }
             }
