@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -57,6 +58,13 @@ public class RsudAngleFixIniYangBenerCoHold extends LinearOpMode {
     boolean lastTrigger = false;
     boolean hasRumbled = false;
 
+    public static double PID_P = 20.0;
+    public static double PID_I = 0.0;
+    public static double PID_D = 0.0;
+    public static double PID_F = 14.5;
+    PIDFCoefficients ShooterPIDF = new PIDFCoefficients(PID_P, PID_I, PID_D, PID_F);
+
+
     @Override
     public void runOpMode() {
 
@@ -94,7 +102,8 @@ public class RsudAngleFixIniYangBenerCoHold extends LinearOpMode {
         turret.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // IMPORTANT: Shooter must be in RUN_USING_ENCODER for RPM limiting to work
-        shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//        shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        shooter.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, ShooterPIDF);
 
         // ---------------- VISION INIT ----------------
         initAprilTag();
