@@ -12,10 +12,8 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.function.Consumer;
@@ -44,8 +42,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 
 @Config
-@TeleOp(name ="April Tag Tracking Test", group = "Test")
-public class aprilTagTracking extends OpMode {
+@TeleOp(name ="April Tag Test", group = "Test")
+public class aprilTagTest extends OpMode {
 
     // Tuning & Constants
     public static boolean CAMERA_ON_TURRET = true;
@@ -76,7 +74,7 @@ public class aprilTagTracking extends OpMode {
     private boolean isRedAlliance = true;
 
     // Hardware
-    private DcMotorEx  turretMotor;
+    private DcMotorEx turretMotor;
     private IMU imu;
 
     // Vision
@@ -186,24 +184,14 @@ public class aprilTagTracking extends OpMode {
         lastDpadDown = currentDpadDown;
 
 
-        // --- Turret / Auto Aim ---
-        if (gamepad2.square && !gamepad2_isSquareClicked) {
-            isAutoAim = !isAutoAim;
-            if(isAutoAim) {
-                // Lock heading on enable
-                double robotYaw = normalizeAngle(imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) - yawOffset);
-                double turretDeg = turretMotor.getCurrentPosition() / TICKS_PER_DEGREE;
-                targetWorldAngle = normalizeAngle(robotYaw + turretDeg);
-            }
-            gamepad2_isSquareClicked = true;
-        } else if (!gamepad2.square) {
-            gamepad2_isSquareClicked = false;
-        }
 
         double robotYaw = normalizeAngle(imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) - yawOffset);
         double turretTicks = turretMotor.getCurrentPosition();
         double turretDegrees = turretTicks / TICKS_PER_DEGREE;
         boolean tagVisible = false;
+
+        double turretDeg = turretMotor.getCurrentPosition() / TICKS_PER_DEGREE;
+        double absoluteDegreeRelativeToRobot = normalizeAngle(robotYaw + turretDeg);
 
         if (isAutoAim) {
             // Search Detections
@@ -234,53 +222,13 @@ public class aprilTagTracking extends OpMode {
 
 
                     tagVisible = true;
-                    // MAKE A PROPER ALGORITHM ..
 
-//                    double bearingError = VISION_DIRECTION * (d.ftcPose.bearing - CAMERA_OFFSET);
-//                    smoothedBearing = (bearingError * SMOOTHING_ALPHA) + (smoothedBearing * (1.0 - SMOOTHING_ALPHA));
-//
-//                    double currentAbsoluteLook = normalizeAngle(robotYaw + turretDegrees);
-//                    if (Math.abs(smoothedBearing) > 0.5) {
-//                        targetWorldAngle = normalizeAngle(currentAbsoluteLook - smoothedBearing);
-//                    }
                     break;
                 }
             }
 
-            // Switch PID based on lock status
-            if (tagVisible) {
-                if (!usingVisionGains) {
-                    turretPIDController = new PIDFController(pidVision);
-                    usingVisionGains = true;
-                }
-            } else {
-                // fall back when tag is not visible again
-//                if (usingVisionGains) {
-//                    turretPIDController = new PIDFController(pidGyro);
-//                    usingVisionGains = false;
-//                }
-            }
-
-            double error = normalizeAngle(targetWorldAngle - robotYaw);
-
-            // Soft limits check
-            double clampedTargetAngle;
-            if (error > MAX_TURRET_ANGLE_POSITIVE) {
-                clampedTargetAngle = MAX_TURRET_ANGLE_POSITIVE;
-                isAtLimit = true;
-            } else if (error < MAX_TURRET_ANGLE_NEGATIVE) {
-                clampedTargetAngle = MAX_TURRET_ANGLE_NEGATIVE;
-                isAtLimit = true;
-            } else {
-                clampedTargetAngle = error;
-                isAtLimit = false;
-            }
 
 
-            turretPIDController.targetPosition = clampedTargetAngle * TICKS_PER_DEGREE;
-            double power = turretPIDController.update(turretTicks);
-            // ALLOW FULL POWER (Range -1.0 to 1.0)
-            turretMotor.setPower(Range.clip(power, -1.0, 1.0));
 
         } else {
             // Manual Mode
@@ -300,6 +248,8 @@ public class aprilTagTracking extends OpMode {
         telemetry.addData("ALLIANCE", isRedAlliance ? "RED" : "BLUE");
         telemetry.addData("TARGET TAG", activeGoalTagId);
         telemetry.addData("AprilTagDistance", AprilTagDistance);
+
+        telemetry.addData("absoluteDegreeRelativeToRobot", absoluteDegreeRelativeToRobot);
 
         telemetry.addData("AprilTagDataA", AprilTagDataA);
         telemetry.addData("MODE", isAutoAim ? (tagVisible ? "AUTO (VISION)" : "AUTO (GYRO)") : "MANUAL");

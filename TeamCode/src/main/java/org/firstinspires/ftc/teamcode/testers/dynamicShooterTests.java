@@ -239,10 +239,6 @@ public class dynamicShooterTests  extends OpMode {
     }
 
 
-
-
-
-
     /**
      * Converts a measurement from inches to centimeters.
      * @param inch The value in inches.
