@@ -7,12 +7,14 @@ import android.util.Size;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.PoseVelocity2d;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -29,8 +31,11 @@ import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.robotcore.external.stream.CameraStreamSource;
 import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibration;
+import org.firstinspires.ftc.teamcode.MecanumDrive;
 import org.firstinspires.ftc.teamcode.controllers.PIDCoefficients;
 import org.firstinspires.ftc.teamcode.controllers.PIDFController;
+import org.firstinspires.ftc.teamcode.controllers.ShooterController;
+import org.firstinspires.ftc.teamcode.controllers.ShooterSolution;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.VisionProcessor;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
@@ -44,22 +49,16 @@ import java.util.concurrent.atomic.AtomicReference;
 
 
 @Config
-@TeleOp(name ="April Tag Tracking Test", group = "Test")
-public class aprilTagTracking extends OpMode {
+@TeleOp(name ="April Tag Localization", group = "Test")
+public class aprilTagLocalization extends OpMode {
+    private double SHOOTER_MOTOR_COUNTS_PER_REV = 28.0;
 
-    // Tuning & Constants
-    public static boolean CAMERA_ON_TURRET = true;
-    public static double CAMERA_OFFSET = 2.0;
 
-    // PID Coefficients
-    public static PIDCoefficients pidVision = new PIDCoefficients(0.015, 0, 0.7); // High D for noise
-    // INCREASED P slightly for speed (0.03 -> 0.035)
     public static PIDCoefficients pidGyro = new PIDCoefficients(0.035, 0, 0.001);
 
     PIDFController turretPIDController = new PIDFController(pidGyro);
     private boolean usingVisionGains = false;
 
-    public static double VISION_DIRECTION = -1.0;
 
     // Shooter Settings
 
@@ -76,7 +75,9 @@ public class aprilTagTracking extends OpMode {
     private boolean isRedAlliance = true;
 
     // Hardware
-    private DcMotorEx  turretMotor;
+    private DcMotorEx turretMotor, shooterMotor;
+    private Servo shooterAd;
+
     private IMU imu;
 
     // Vision
@@ -89,6 +90,8 @@ public class aprilTagTracking extends OpMode {
     private boolean isAutoAim = false;
     private boolean isAtLimit = false;
     private double yawOffset = 0;
+
+    private double detectedDistance = 0;
 
     // Input Toggles
     private boolean gamepad2_isSquareClicked = false;
@@ -104,7 +107,6 @@ public class aprilTagTracking extends OpMode {
     private static final double SMOOTHING_ALPHA = 0.2;
     private double smoothedBearing = 0;
 
-    private DcMotorEx frontLeft, frontRight, backLeft, backRight;
 
     private double AprilTagDistance = 0;
 
@@ -114,6 +116,9 @@ public class aprilTagTracking extends OpMode {
 
     public static PIDFCoefficients coeffs = new PIDFCoefficients(60,0,0,17.5);
 
+    private ShooterController shooterController;
+
+    private MecanumDrive mecanumDrive;
 
     @Override
     public void init() {
@@ -121,17 +126,10 @@ public class aprilTagTracking extends OpMode {
         telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
 
         // Motors
-        turretMotor = hardwareMap.get(DcMotorEx.class, "shooterRot");
-        frontLeft   = hardwareMap.get(DcMotorEx.class, "front_left_drive");
-        frontRight  = hardwareMap.get(DcMotorEx.class, "front_right_drive");
-        backLeft    = hardwareMap.get(DcMotorEx.class, "back_left_drive");
-        backRight   = hardwareMap.get(DcMotorEx.class, "back_right_drive");
+        shooterMotor = hardwareMap.get(DcMotorEx.class, "shooter");
+        shooterAd = hardwareMap.get(Servo.class, "shooterAd");
 
-        // ---------------- MOTOR DIRECTIONS ----------------
-        frontLeft.setDirection(DcMotor.Direction.REVERSE);
-        backLeft.setDirection(DcMotor.Direction.REVERSE);
-        frontRight.setDirection(DcMotor.Direction.FORWARD);
-        backRight.setDirection(DcMotor.Direction.FORWARD);
+        turretMotor = hardwareMap.get(DcMotorEx.class, "shooterRot");
 
         // Turret Config
         turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -142,6 +140,15 @@ public class aprilTagTracking extends OpMode {
         // INCREASED LIMIT TO 1.0 (Full Speed)
         turretPIDController.setOutputBounds(-1.0, 1.0);
 
+        shooterMotor.setDirection(DcMotor.Direction.REVERSE);
+
+        shooterMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, coeffs);
+
+        Pose2d initialPose = new Pose2d(0, 0, Math.toRadians(90));
+        mecanumDrive = new MecanumDrive(hardwareMap, initialPose);
+
+
+        shooterController = new ShooterController();
 
         // IMU Config
         imu = hardwareMap.get(IMU.class, "imu");
@@ -172,10 +179,17 @@ public class aprilTagTracking extends OpMode {
         double rx = -gamepad1.right_stick_x;
 
         double max = Math.max(1.0, Math.abs(y) + Math.abs(x) + Math.abs(rx));
-        frontLeft.setPower((y + x + rx) / max);
-        frontRight.setPower((y - x - rx) / max);
-        backLeft.setPower((y - x + rx) / max);
-        backRight.setPower((y + x - rx) / max);
+
+
+        mecanumDrive.setDrivePowers(new PoseVelocity2d(
+                new Vector2d(
+                        -gamepad1.left_stick_y,
+                        -gamepad1.left_stick_x
+                ),
+                -gamepad1.right_stick_x
+        ));
+
+        mecanumDrive.updatePoseEstimate();
 
         // --- Alliance Selection (Driver 1) ---
         boolean currentDpadDown = gamepad1.dpad_down;
@@ -186,24 +200,14 @@ public class aprilTagTracking extends OpMode {
         lastDpadDown = currentDpadDown;
 
 
-        // --- Turret / Auto Aim ---
-        if (gamepad2.square && !gamepad2_isSquareClicked) {
-            isAutoAim = !isAutoAim;
-            if(isAutoAim) {
-                // Lock heading on enable
-                double robotYaw = normalizeAngle(imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) - yawOffset);
-                double turretDeg = turretMotor.getCurrentPosition() / TICKS_PER_DEGREE;
-                targetWorldAngle = normalizeAngle(robotYaw + turretDeg);
-            }
-            gamepad2_isSquareClicked = true;
-        } else if (!gamepad2.square) {
-            gamepad2_isSquareClicked = false;
-        }
 
         double robotYaw = normalizeAngle(imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) - yawOffset);
         double turretTicks = turretMotor.getCurrentPosition();
         double turretDegrees = turretTicks / TICKS_PER_DEGREE;
         boolean tagVisible = false;
+
+        double turretDeg = turretMotor.getCurrentPosition() / TICKS_PER_DEGREE;
+        double absoluteDegreeRelativeToRobot = normalizeAngle(robotYaw + turretDeg);
 
         if (isAutoAim) {
             // Search Detections
@@ -229,58 +233,36 @@ public class aprilTagTracking extends OpMode {
                 }
 
 
-                if (d.metadata != null && d.id == activeGoalTagId) {
-                    telemetry.addLine("DETECTED!!!");
+                if (d.metadata != null) {
+                    telemetry.addLine("DETECTED SOMETHING!!!");
 
+                    detectedDistance = d.ftcPose.range;
+
+                    double detectedX = d.robotPose.getPosition().x;
+                    double detectedY = d.robotPose.getPosition().y;
+                    double detectedZ = d.robotPose.getPosition().z;
+
+                    double detectedPitch = d.robotPose.getOrientation().getPitch(AngleUnit.DEGREES);
+                    double detectedRoll = d.robotPose.getOrientation().getRoll(AngleUnit.DEGREES);
+                    double detectedYaw = d.robotPose.getOrientation().getYaw(AngleUnit.DEGREES);
+
+
+                    telemetry.addData("detectedX", detectedX);
+                    telemetry.addData("detectedY", detectedY);
+                    telemetry.addData("detectedZ", detectedZ);
+                    telemetry.addData("detectedPitch", detectedPitch);
+                    telemetry.addData("detectedRoll", detectedRoll);
+                    telemetry.addData("detectedYaw", detectedYaw);
+
+
+                    mecanumDrive.localizer.setPose(new Pose2d(detectedX, detectedY, Math.toRadians(detectedYaw)));
 
                     tagVisible = true;
-                    // MAKE A PROPER ALGORITHM ..
 
-//                    double bearingError = VISION_DIRECTION * (d.ftcPose.bearing - CAMERA_OFFSET);
-//                    smoothedBearing = (bearingError * SMOOTHING_ALPHA) + (smoothedBearing * (1.0 - SMOOTHING_ALPHA));
-//
-//                    double currentAbsoluteLook = normalizeAngle(robotYaw + turretDegrees);
-//                    if (Math.abs(smoothedBearing) > 0.5) {
-//                        targetWorldAngle = normalizeAngle(currentAbsoluteLook - smoothedBearing);
-//                    }
                     break;
                 }
             }
 
-            // Switch PID based on lock status
-            if (tagVisible) {
-                if (!usingVisionGains) {
-                    turretPIDController = new PIDFController(pidVision);
-                    usingVisionGains = true;
-                }
-            } else {
-                // fall back when tag is not visible again
-//                if (usingVisionGains) {
-//                    turretPIDController = new PIDFController(pidGyro);
-//                    usingVisionGains = false;
-//                }
-            }
-
-            double error = normalizeAngle(targetWorldAngle - robotYaw);
-
-            // Soft limits check
-            double clampedTargetAngle;
-            if (error > MAX_TURRET_ANGLE_POSITIVE) {
-                clampedTargetAngle = MAX_TURRET_ANGLE_POSITIVE;
-                isAtLimit = true;
-            } else if (error < MAX_TURRET_ANGLE_NEGATIVE) {
-                clampedTargetAngle = MAX_TURRET_ANGLE_NEGATIVE;
-                isAtLimit = true;
-            } else {
-                clampedTargetAngle = error;
-                isAtLimit = false;
-            }
-
-
-            turretPIDController.targetPosition = clampedTargetAngle * TICKS_PER_DEGREE;
-            double power = turretPIDController.update(turretTicks);
-            // ALLOW FULL POWER (Range -1.0 to 1.0)
-            turretMotor.setPower(Range.clip(power, -1.0, 1.0));
 
         } else {
             // Manual Mode
@@ -296,10 +278,27 @@ public class aprilTagTracking extends OpMode {
         }
 
 
+        if (tagVisible) {
+            ShooterSolution shooterSolution = shooterController.getBestShootingSolution(inchToCm(AprilTagDistance), 98.5);
+            shooterAd.setPosition(shooterController.angleToServo(shooterSolution.bestAngle));
+            double targetVelocityTicks = shooterController.rpmToVelocityTicks(shooterSolution.targetRPM);
+            shooterMotor.setVelocity(targetVelocityTicks);
+
+
+            double SHOOTER_RPM = shooterMotor.getVelocity() / SHOOTER_MOTOR_COUNTS_PER_REV * 60;
+
+            telemetry.addData("SHOOTER VELOCITY", shooterMotor.getVelocity());
+            telemetry.addData("SHOOTER RPM", SHOOTER_RPM);
+
+
+        }
+
         // Telemetry Updates
         telemetry.addData("ALLIANCE", isRedAlliance ? "RED" : "BLUE");
         telemetry.addData("TARGET TAG", activeGoalTagId);
         telemetry.addData("AprilTagDistance", AprilTagDistance);
+
+        telemetry.addData("absoluteDegreeRelativeToRobot (degree)", absoluteDegreeRelativeToRobot);
 
         telemetry.addData("AprilTagDataA", AprilTagDataA);
         telemetry.addData("MODE", isAutoAim ? (tagVisible ? "AUTO (VISION)" : "AUTO (GYRO)") : "MANUAL");
@@ -357,4 +356,14 @@ public class aprilTagTracking extends OpMode {
         public void onDrawFrame(Canvas canvas, int onscreenWidth, int onscreenHeight, float scaleBmpPxToCanvasPx, float scaleCanvasDensity, Object userContext) {}
         public void getFrameBitmap(Continuation<? extends Consumer<Bitmap>> continuation) { continuation.dispatch(bitmapConsumer -> bitmapConsumer.accept(lastFrame.get())); }
     }
+
+    /**
+     * Converts a measurement from inches to centimeters.
+     * @param inch The value in inches.
+     * @return The value converted to centimeters.
+     */
+    public double inchToCm(double inch) {
+        return inch * 2.54;
+    }
+
 }

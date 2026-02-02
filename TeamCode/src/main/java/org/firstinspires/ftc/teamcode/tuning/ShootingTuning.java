@@ -38,8 +38,8 @@ public class ShootingTuning extends OpMode {
     private double lowVelocity = 500;
 
 
-    public static double P = 20;
-    public static double F = 14.5;
+    public static double P = 60;
+    public static double F = 17.5;
 
 
     public static PIDFCoefficients coeffs = new PIDFCoefficients(P,0,0,F);
