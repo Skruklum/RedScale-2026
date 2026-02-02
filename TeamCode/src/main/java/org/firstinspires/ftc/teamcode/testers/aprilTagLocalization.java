@@ -233,8 +233,8 @@ public class aprilTagLocalization extends OpMode {
                 }
 
 
-                if (d.metadata != null && d.id == activeGoalTagId) {
-                    telemetry.addLine("DETECTED!!!");
+                if (d.metadata != null) {
+                    telemetry.addLine("DETECTED SOMETHING!!!");
 
                     detectedDistance = d.ftcPose.range;
 
