@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Config
-@TeleOp(name ="April Tag Shooting Test (DYNAMIC)", group = "Test")
+@TeleOp(name ="April Tag Shooting Test (DYNAMIC) 2", group = "Test")
 public class aprilTagShooting2 extends OpMode {
 
     private double SHOOTER_MOTOR_COUNTS_PER_REV = 28.0;

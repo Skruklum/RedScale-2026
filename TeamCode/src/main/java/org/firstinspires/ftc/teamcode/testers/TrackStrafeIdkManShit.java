@@ -7,6 +7,10 @@ import android.util.Size;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.PoseVelocity2d;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -26,6 +30,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.robotcore.external.stream.CameraStreamSource;
 import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibration;
+import org.firstinspires.ftc.teamcode.Drawing;
+import org.firstinspires.ftc.teamcode.MecanumDrive;
 import org.firstinspires.ftc.teamcode.controllers.PIDCoefficients;
 import org.firstinspires.ftc.teamcode.controllers.PIDFController;
 import org.firstinspires.ftc.vision.VisionPortal;
@@ -42,6 +48,9 @@ import java.util.concurrent.atomic.AtomicReference;
 @Config
 @TeleOp(name ="AprilTag Continuous Tracking", group = "Test")
 public class TrackStrafeIdkManShit extends OpMode {
+
+    /* ================== RATIO ================== */
+    private double coordinatePerInchRatio = 72 / 144;
 
     /* ================== PID ================== */
     // PID for when we see the tag (needs to be responsive)
@@ -68,13 +77,28 @@ public class TrackStrafeIdkManShit extends OpMode {
 
     /* ================== HARDWARE ================== */
     private DcMotorEx turretMotor;
-    private DcMotorEx frontLeft, frontRight, backLeft, backRight;
     private IMU imu;
 
     /* ================== VISION OBJECTS ================== */
     private VisionPortal visionPortal;
     private AprilTagProcessor aprilTag;
     private final CameraStreamProcessor streamProcessor = new CameraStreamProcessor();
+
+    /* ================== APRIL TAG DETECTED DATA ================== */
+    private double detectedDistanceInch = 0;
+    private double detectedDistanceX_Inch = 0;
+    private double detectedDistanceY_Inch = 0;
+
+    private double aprilTagX = 0;
+    private double aprilTagY = 0;
+
+    enum AimState {
+        SNAP_TO_BEARING,
+        LOCK_WORLD
+    }
+
+    private AimState aimState = AimState.SNAP_TO_BEARING;
+
 
     /* ================== STATE VARIABLES ================== */
     private PIDFController turretPID = new PIDFController(pidGyro);
@@ -83,10 +107,15 @@ public class TrackStrafeIdkManShit extends OpMode {
     private boolean isAutoAim = false;
     private boolean lastSquare = false;
     private boolean isAtLimit = false;
+    private boolean fieldOrientedLock = false;
+
 
     private double yawOffset = 0;
     private double targetWorldAngle = 0; // The "World Heading" we want to face
     private double smoothedBearingError = 0;
+
+    private MecanumDrive mecanumDrive;
+
 
     @Override
     public void init() {
@@ -95,14 +124,9 @@ public class TrackStrafeIdkManShit extends OpMode {
 
         // Hardware Mapping
         turretMotor = hardwareMap.get(DcMotorEx.class, "shooterRot");
-        frontLeft  = hardwareMap.get(DcMotorEx.class, "front_left_drive");
-        frontRight = hardwareMap.get(DcMotorEx.class, "front_right_drive");
-        backLeft   = hardwareMap.get(DcMotorEx.class, "back_left_drive");
-        backRight  = hardwareMap.get(DcMotorEx.class, "back_right_drive");
 
-        // Motor Directions
-        frontLeft.setDirection(DcMotor.Direction.REVERSE);
-        backLeft.setDirection(DcMotor.Direction.REVERSE);
+        Pose2d initialPose = new Pose2d(0, 0, Math.toRadians(90));
+        mecanumDrive = new MecanumDrive(hardwareMap, initialPose);
 
         // Turret Configuration
         turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -136,15 +160,16 @@ public class TrackStrafeIdkManShit extends OpMode {
     public void loop() {
         /* ================== DRIVER CONTROL ================== */
         double y = -gamepad1.left_stick_y;
-        double x = -gamepad1.left_stick_x; // Counteract strafing imperfections if needed
+        double x = -gamepad1.left_stick_x;
         double rx = -gamepad1.right_stick_x;
 
-        // Simple mecanum drive
-        double max = Math.max(1.0, Math.abs(y) + Math.abs(x) + Math.abs(rx));
-        frontLeft.setPower((y + x + rx) / max);
-        frontRight.setPower((y - x - rx) / max);
-        backLeft.setPower((y - x + rx) / max);
-        backRight.setPower((y + x - rx) / max);
+        mecanumDrive.setDrivePowers(new PoseVelocity2d(
+                new Vector2d(
+                        -gamepad1.left_stick_y,
+                        -gamepad1.left_stick_x
+                ),
+                -gamepad1.right_stick_x
+        ));
 
         /* ================== AUTO AIM TOGGLE ================== */
         if (gamepad2.square && !lastSquare) {
@@ -170,12 +195,21 @@ public class TrackStrafeIdkManShit extends OpMode {
         double rawBearing = 0;
         double bearingError = 0;
 
+        if (gamepad1.triangleWasPressed()) {
+            fieldOrientedLock = !fieldOrientedLock;
+        }
+
         if (isAutoAim) {
             List<AprilTagDetection> detections = aprilTag.getDetections();
 
             // Loop through detections to find our specific Tag ID
             for (AprilTagDetection d : detections) {
                 if (d.metadata != null && d.id == RED_GOAL_TAG_ID) {
+
+//                    if (aimState == AimState.LOCK_WORLD) {
+//                        aimState = AimState.SNAP_TO_BEARING;
+//                    }
+
                     tagVisible = true;
 
                     // 1. RAW BEARING: The angle from Camera Center to Tag
@@ -190,10 +224,28 @@ public class TrackStrafeIdkManShit extends OpMode {
                             bearingError * SMOOTHING_ALPHA +
                                     smoothedBearingError * (1.0 - SMOOTHING_ALPHA);
 
-                    // 4. UPDATE TARGET WORLD ANGLE
-                    // Since camera is on turret:
-                    // Current Turret World Heading + Angle to Tag = New Target Heading
-                    targetWorldAngle = normalizeAngle(turretAbs + smoothedBearingError);
+                    if (aimState == AimState.SNAP_TO_BEARING) {
+                        targetWorldAngle =
+                                normalizeAngle(turretAbs + smoothedBearingError);
+
+                        double robotPoseX = d.robotPose.getPosition().x;
+                        double robotPoseY = d.robotPose.getPosition().y;
+                        double robotPoseYaw = d.robotPose.getOrientation().getYaw(AngleUnit.DEGREES);
+
+                         detectedDistanceInch = d.ftcPose.range;
+                         detectedDistanceX_Inch = Math.sin(rawBearing) * detectedDistanceInch;
+                         detectedDistanceY_Inch = Math.cos(rawBearing) * detectedDistanceInch;
+
+                        aprilTagX = robotPoseX + (detectedDistanceX_Inch * coordinatePerInchRatio);
+                        aprilTagY = robotPoseY + (detectedDistanceY_Inch * coordinatePerInchRatio);
+
+                        mecanumDrive.localizer.setPose(new Pose2d(robotPoseX, robotPoseY, Math.toRadians(robotPoseYaw)));
+
+
+                        if (Math.abs(smoothedBearingError) < 0.5) {
+                            aimState = AimState.LOCK_WORLD;
+                        }
+                    }
 
                     // 5. SWITCH PID GAINS (Vision is noisy, needs different gains)
                     if (!usingVisionGains) {
@@ -205,7 +257,25 @@ public class TrackStrafeIdkManShit extends OpMode {
             }
 
             // If we lost the tag, switch back to Gyro gains for a stiff hold
-            if (!tagVisible && usingVisionGains) {
+            if (fieldOrientedLock && aprilTagX != 0 && aprilTagY != 0) {
+                turretPID = new PIDFController(pidGyro);
+
+                double robotPoseX = mecanumDrive.localizer.getPose().position.x;
+                double robotPoseY = mecanumDrive.localizer.getPose().position.y;
+
+                double triangleWidth = Math.abs(robotPoseX - aprilTagX);
+                double triangleHeight = Math.abs(robotPoseY - aprilTagY);
+                double triangleHypothenuse = Math.sqrt(triangleWidth + triangleHeight);
+
+                double errorAngle = Math.toDegrees(Math.asin(triangleWidth / triangleHypothenuse));
+                telemetry.addLine("\n--- FIELD ORIENTED LOCK ---");
+                telemetry.addData("Field Oriented aprilTagX ", aprilTagX);
+                telemetry.addData("Field Oriented aprilTagY ", aprilTagY);
+
+                targetWorldAngle =
+                        normalizeAngle(turretAbs + errorAngle);
+
+            } else if (!tagVisible && usingVisionGains) {
                 turretPID = new PIDFController(pidGyro);
                 usingVisionGains = false;
             }
@@ -251,6 +321,15 @@ public class TrackStrafeIdkManShit extends OpMode {
         // Status
         telemetry.addData("Mode", isAutoAim ? "AUTO AIM" : "MANUAL");
         telemetry.addData("Tag Visible", tagVisible);
+        telemetry.addData("AimState", aimState);
+
+
+        telemetry.addLine("\n--- APRIL TAG ---");
+        telemetry.addData("aprilTagX", aprilTagX);
+        telemetry.addData("aprilTagY", aprilTagY);
+        telemetry.addData("detectedDistanceInch", detectedDistanceInch);
+        telemetry.addData("detectedDistanceX_Inch", detectedDistanceX_Inch);
+        telemetry.addData("detectedDistanceY_Inch", detectedDistanceY_Inch);
 
         telemetry.addLine("\n--- TURRET MATH ---");
         telemetry.addData("Robot Yaw (IMU)", "%.2f", robotYaw);
@@ -268,6 +347,15 @@ public class TrackStrafeIdkManShit extends OpMode {
         telemetry.addData("Motor Power", "%.2f", turretMotor.getPower());
         telemetry.addData("Limit Reached", isAtLimit);
         telemetry.addData("Using Vision PID", usingVisionGains);
+
+        mecanumDrive.updatePoseEstimate();
+
+        Pose2d pose = mecanumDrive.localizer.getPose();
+
+        TelemetryPacket packet = new TelemetryPacket();
+        packet.fieldOverlay().setStroke("#3F51B5");
+        Drawing.drawRobot(packet.fieldOverlay(), pose);
+        FtcDashboard.getInstance().sendTelemetryPacket(packet);
 
         telemetry.update();
     }
