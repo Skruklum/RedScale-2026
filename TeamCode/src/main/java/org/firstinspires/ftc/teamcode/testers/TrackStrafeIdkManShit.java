@@ -50,7 +50,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class TrackStrafeIdkManShit extends OpMode {
 
     /* ================== RATIO ================== */
-    private double coordinatePerInchRatio = 72 / 144;
+    private double coordinatePerInchRatio = 1;
 
     /* ================== PID ================== */
     // PID for when we see the tag (needs to be responsive)
@@ -267,7 +267,7 @@ public class TrackStrafeIdkManShit extends OpMode {
 
             // If we lost the tag, switch back to Gyro gains for a stiff hold
             if (fieldOrientedLock && aprilTagX != 0 && aprilTagY != 0) {
-                if (smoothedBearingError > 0.5) aimState = AimState.SNAP_TO_BEARING;
+                if (Math.abs(smoothedBearingError) > 0.5) aimState = AimState.SNAP_TO_BEARING;
 
                 turretPID = new PIDFController(pidGyro);
 
@@ -276,7 +276,7 @@ public class TrackStrafeIdkManShit extends OpMode {
 
                 double triangleWidth = Math.abs(robotPoseX - aprilTagX);
                 double triangleHeight = Math.abs(robotPoseY - aprilTagY);
-                double triangleHypothenuse = Math.sqrt(triangleWidth + triangleHeight);
+                double triangleHypothenuse = Math.sqrt(Math.pow(triangleWidth, 2) + Math.pow(triangleHeight, 2));
 
                 double errorAngle = Math.toDegrees(Math.asin(triangleWidth / triangleHypothenuse));
                 telemetry.addLine("\n--- FIELD ORIENTED LOCK ---");
