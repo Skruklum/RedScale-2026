@@ -92,6 +92,10 @@ public class TrackStrafeIdkManShit extends OpMode {
     private double aprilTagX = 0;
     private double aprilTagY = 0;
 
+    private double robotPoseX = 0;
+    private double robotPoseY = 0;
+    private double robotPoseYaw = 0;
+
     enum AimState {
         SNAP_TO_BEARING,
         LOCK_WORLD
@@ -190,6 +194,10 @@ public class TrackStrafeIdkManShit extends OpMode {
         // Turret Heading (World Frame) = Robot Heading + Turret Angle
         double turretAbs = normalizeAngle(robotYaw + turretDeg);
 
+        if (gamepad2.circleWasPressed()) {
+            targetWorldAngle = normalizeAngle(robotYaw + turretDeg);
+        }
+
         /* ================== VISION LOGIC ================== */
         boolean tagVisible = false;
         double rawBearing = 0;
@@ -206,9 +214,6 @@ public class TrackStrafeIdkManShit extends OpMode {
             for (AprilTagDetection d : detections) {
                 if (d.metadata != null && d.id == RED_GOAL_TAG_ID) {
 
-//                    if (aimState == AimState.LOCK_WORLD) {
-//                        aimState = AimState.SNAP_TO_BEARING;
-//                    }
 
                     tagVisible = true;
 
@@ -228,9 +233,9 @@ public class TrackStrafeIdkManShit extends OpMode {
                         targetWorldAngle =
                                 normalizeAngle(turretAbs + smoothedBearingError);
 
-                        double robotPoseX = d.robotPose.getPosition().x;
-                        double robotPoseY = d.robotPose.getPosition().y;
-                        double robotPoseYaw = d.robotPose.getOrientation().getYaw(AngleUnit.DEGREES);
+                         robotPoseX = d.robotPose.getPosition().x;
+                         robotPoseY = d.robotPose.getPosition().y;
+                         robotPoseYaw = d.robotPose.getOrientation().getYaw(AngleUnit.DEGREES);
 
                          detectedDistanceInch = d.ftcPose.range;
                          detectedDistanceX_Inch = Math.sin(rawBearing) * detectedDistanceInch;
@@ -258,6 +263,8 @@ public class TrackStrafeIdkManShit extends OpMode {
 
             // If we lost the tag, switch back to Gyro gains for a stiff hold
             if (fieldOrientedLock && aprilTagX != 0 && aprilTagY != 0) {
+                if (smoothedBearingError > 0.5) aimState = AimState.SNAP_TO_BEARING;
+
                 turretPID = new PIDFController(pidGyro);
 
                 double robotPoseX = mecanumDrive.localizer.getPose().position.x;
@@ -276,6 +283,8 @@ public class TrackStrafeIdkManShit extends OpMode {
                         normalizeAngle(turretAbs + errorAngle);
 
             } else if (!tagVisible && usingVisionGains) {
+                if (smoothedBearingError > 0.5) aimState = AimState.SNAP_TO_BEARING;
+
                 turretPID = new PIDFController(pidGyro);
                 usingVisionGains = false;
             }
@@ -327,6 +336,11 @@ public class TrackStrafeIdkManShit extends OpMode {
         telemetry.addLine("\n--- APRIL TAG ---");
         telemetry.addData("aprilTagX", aprilTagX);
         telemetry.addData("aprilTagY", aprilTagY);
+
+        telemetry.addData("robotPoseX", robotPoseX);
+        telemetry.addData("robotPoseY", robotPoseY);
+        telemetry.addData("robotPoseYaw", robotPoseYaw);
+
         telemetry.addData("detectedDistanceInch", detectedDistanceInch);
         telemetry.addData("detectedDistanceX_Inch", detectedDistanceX_Inch);
         telemetry.addData("detectedDistanceY_Inch", detectedDistanceY_Inch);

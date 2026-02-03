@@ -250,6 +250,8 @@ public class aprilTagShooting2 extends OpMode {
                     shooterMotor.getVelocity() / SHOOTER_MOTOR_COUNTS_PER_REV * 60;
 
             telemetry.addData("SHOOTER VELOCITY", shooterMotor.getVelocity());
+            telemetry.addData("SHOOTER TARGET", shooterSolution.targetRPM);
+
             telemetry.addData("SHOOTER RPM", SHOOTER_RPM);
         }
 
