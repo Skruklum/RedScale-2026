@@ -65,6 +65,11 @@ public class RsudAngleFix_AutoAimDynamicTags extends LinearOpMode {
     enum AimState { SNAP_TO_BEARING, LOCK_WORLD }
     AimState aimState = AimState.SNAP_TO_BEARING;
 
+    /* ================= CURRENT TEAM STATE ================= */
+
+    enum TeamState { RED, BLUE }
+    TeamState teamState = TeamState.RED;
+
     boolean autoAim = false;
     boolean lastSquare = false;
 
@@ -79,9 +84,9 @@ public class RsudAngleFix_AutoAimDynamicTags extends LinearOpMode {
             new PIDFController(new PIDCoefficients(0.015, 0, 0.7));
 
     /* ================= DYNAMIC TAG SWITCHING ================= */
-    static final int[] TARGET_TAGS = {20, 21, 22};
-    int currentTagIndex = 0;
-    int currentTargetTag = TARGET_TAGS[0];
+    static final int RED_TAG = 20;
+    static final int BLUE_TAG = 24;
+    int currentTargetTag = RED_TAG;
     boolean lastTagButton = false;
 
     /* ================= VISION ================= */
@@ -140,6 +145,26 @@ public class RsudAngleFix_AutoAimDynamicTags extends LinearOpMode {
         telemetry.addLine("READY");
         telemetry.update();
 
+        while (true) {
+
+            /* ===== TAG SWITCH (GAMEPAD1 A) ===== */
+            if (gamepad1.a && !lastTagButton) {
+                if (teamState == TeamState.RED) {
+                    teamState = TeamState.BLUE;
+                    currentTargetTag = BLUE_TAG;
+                }else if (teamState == TeamState.BLUE) {
+                    teamState = TeamState.RED;
+                    currentTargetTag = RED_TAG;
+                }
+                aimState = AimState.SNAP_TO_BEARING;
+            }
+            lastTagButton = gamepad1.a;
+
+            if (isStarted()) {
+                break;
+            }
+        }
+
         waitForStart();
         yawOffset = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
 
@@ -190,13 +215,6 @@ public class RsudAngleFix_AutoAimDynamicTags extends LinearOpMode {
             }
             lastSquare = gamepad2.square;
 
-            /* ===== TAG SWITCH (GAMEPAD1 A) ===== */
-            if (gamepad1.a && !lastTagButton) {
-                currentTagIndex = (currentTagIndex + 1) % TARGET_TAGS.length;
-                currentTargetTag = TARGET_TAGS[currentTagIndex];
-                aimState = AimState.SNAP_TO_BEARING;
-            }
-            lastTagButton = gamepad1.a;
 
             updateTurretAutoAim();
 
