@@ -199,8 +199,6 @@ public class dynamicShooterTests  extends OpMode {
 
 
         if (shooterActive) {
-
-
             shooterMotor.setPower(1);
         } else {
             telemetry.addLine("=========================");
