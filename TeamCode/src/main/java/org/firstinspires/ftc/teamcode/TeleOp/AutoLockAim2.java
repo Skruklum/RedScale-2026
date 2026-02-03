@@ -17,13 +17,13 @@ import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.teamcode.controllers.PIDCoefficients;
 import org.firstinspires.ftc.teamcode.controllers.PIDFController;
 import org.firstinspires.ftc.teamcode.controllers.RobotPoseController;
+import org.firstinspires.ftc.teamcode.controllers.ShooterRotatorController;
 
 @TeleOp(name = "Auto Lock Aim v2 (Clamped)", group = "Competition")
 public class AutoLockAim2 extends LinearOpMode {
 
     // --- HARDWARE ---
     private DcMotorEx leftMotor, rightMotor, turretMotor;
-    private RobotPoseController robotPoseController;
 
     // --- PID TUNING ---
     // Start with P=0.03. Increase if sluggish. D=0.001 stops oscillation.
@@ -51,12 +51,15 @@ public class AutoLockAim2 extends LinearOpMode {
     private double yawOffset = 0; // To reset IMU zero
     private DcMotorEx frontLeft, frontRight, backLeft, backRight;
 
-    private IMU imu;
+    private RobotPoseController robotPoseController;
+    private ShooterRotatorController shooterRotatorController;
+
 
 
     @Override
     public void runOpMode() {
         robotPoseController = new RobotPoseController(hardwareMap);
+        shooterRotatorController = new ShooterRotatorController(hardwareMap, robotPoseController);
         // --- INIT HARDWARE ---
 //        leftMotor = hardwareMap.get(DcMotorEx.class, "left");
 //        rightMotor = hardwareMap.get(DcMotorEx.class, "right");
@@ -87,16 +90,7 @@ public class AutoLockAim2 extends LinearOpMode {
         // Dashboard & Telemetry
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
-        // IMU Init
-        imu = hardwareMap.get(IMU.class, "imu");
-        IMU.Parameters parameters = new IMU.Parameters(
-                new RevHubOrientationOnRobot(
-                        RevHubOrientationOnRobot.LogoFacingDirection.LEFT,
-                        RevHubOrientationOnRobot.UsbFacingDirection.UP
-                )
-        );
-        imu.initialize(parameters);
-        imu.resetYaw();
+
 
         telemetry.addLine("Ready. Press Start.");
         telemetry.update();
@@ -104,7 +98,7 @@ public class AutoLockAim2 extends LinearOpMode {
         waitForStart();
 
         // Capture initial yaw to treat "Forward" as 0
-        yawOffset = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+        yawOffset = robotPoseController.getYaw();
 
         while (opModeIsActive()) {
             // ===== DRIVE =====
@@ -119,36 +113,19 @@ public class AutoLockAim2 extends LinearOpMode {
             backRight.setPower((y + x - rx) / max);
 
             // --- 1. SENSOR READINGS ---
-            double robotYaw = normalizeAngle(imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) - yawOffset);
+            double robotYaw = robotPoseController.getRobotYaw();
+
+            shooterRotatorController.update();
+            robotPoseController.update();
             double turretTicks = turretMotor.getCurrentPosition();
             double turretDegrees = turretTicks / TICKS_PER_DEGREE;
 
-            // Absolute Angle = Where the turret is actually pointing in the world
-            double turretWorldAngle = normalizeAngle(robotYaw + turretDegrees);
-
-            // --- 2. DRIVER CONTROL (CHASSIS) ---
-//            double drive = -gamepad1.left_stick_y;
-//            double turn = gamepad1.right_stick_x;
-//            double leftPower = drive + turn;
-//            double rightPower = drive - turn;
-//
-//            // Normalize power if > 1.0
-//            double max = Math.max(Math.abs(leftPower), Math.abs(rightPower));
-//            if (max > 1.0) { leftPower /= max; rightPower /= max; }
-//
-//            if (Math.abs(drive) > 0.05 || Math.abs(turn) > 0.05) {
-//                leftMotor.setPower(leftPower);
-//                rightMotor.setPower(rightPower);
-//            } else {
-//                leftMotor.setPower(0);
-//                rightMotor.setPower(0);
-//            }
 
             // --- 3. INPUT HANDLING ---
 
             // [Square]: Set Target (Lock current heading)
             if (gamepad1.square && !isSquareClicked) {
-                targetWorldAngle = turretWorldAngle;
+                shooterRotatorController.setTargetWorldAngle();
                 isSquareClicked = true;
             } else if (!gamepad1.square) {
                 isSquareClicked = false;
@@ -167,36 +144,7 @@ public class AutoLockAim2 extends LinearOpMode {
             // --- 4. TURRET LOGIC (CLAMPED TRACKING) ---
 
             if (isAutoAimActive) {
-                // Step A: Calculate 'Ideal' Angle relative to Robot
-                // "Ideally, the turret should look X degrees to the left/right to see the target"
-                double error = normalizeAngle(targetWorldAngle - robotYaw);
-                double requiredTurretAngle = error;
-
-                // Step B: Clamp to Mechanical Limits
-                double clampedTargetAngle;
-
-                if (requiredTurretAngle > MAX_TURRET_ANGLE_POSITIVE) {
-                    // Robot turned too far right -> Hold Left Limit
-                    clampedTargetAngle = MAX_TURRET_ANGLE_POSITIVE;
-                    isAtLimit = true;
-                } else if (requiredTurretAngle < MAX_TURRET_ANGLE_NEGATIVE) {
-                    // Robot turned too far left -> Hold Right Limit
-                    clampedTargetAngle = MAX_TURRET_ANGLE_NEGATIVE;
-                    isAtLimit = true;
-                } else {
-                    // Within range -> Track perfectly
-                    clampedTargetAngle = requiredTurretAngle;
-                    isAtLimit = false;
-                }
-
-                // Step C: Execute PID
-                // Convert Degrees back to Ticks for the PID controller
-                double targetTicks = clampedTargetAngle * TICKS_PER_DEGREE;
-
-                pidController.targetPosition = targetTicks;
-                double power = pidController.update(turretTicks);
-
-                turretMotor.setPower(power);
+                shooterRotatorController.activate();
 
             } else {
                 // MANUAL OVERRIDE (Gamepad 2)
