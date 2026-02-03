@@ -96,6 +96,9 @@ public class TrackStrafeIdkManShit extends OpMode {
     private double robotPoseY = 0;
     private double robotPoseYaw = 0;
 
+    private Pose2d RedAlliance_AprilTag_Position = new Pose2d(62.51,56.74,Math.toRadians(-40));
+    private Pose2d BlueAlliance_AprilTag_Position = new Pose2d(62.51,-56.74,Math.toRadians(40));
+
     enum AimState {
         SNAP_TO_BEARING,
         LOCK_WORLD
@@ -236,6 +239,7 @@ public class TrackStrafeIdkManShit extends OpMode {
                          robotPoseX = d.robotPose.getPosition().x;
                          robotPoseY = d.robotPose.getPosition().y;
                          robotPoseYaw = d.robotPose.getOrientation().getYaw(AngleUnit.DEGREES);
+
 
                          detectedDistanceInch = d.ftcPose.range;
                          detectedDistanceX_Inch = Math.sin(rawBearing) * detectedDistanceInch;
@@ -399,11 +403,11 @@ public class TrackStrafeIdkManShit extends OpMode {
 
     private void initVision() {
         // Adjust these numbers to match where your camera is on the turret!
-        Position camPos = new Position(DistanceUnit.CM, 0, 6, 43, 0);
-        YawPitchRollAngles camRot = new YawPitchRollAngles(AngleUnit.DEGREES, 0, 0, 0, 0);
+        Position cameraPosition = new Position(DistanceUnit.CM, cmToInch(-21.5), mmToInch(39.11),cmToInch(41), 0);
+        YawPitchRollAngles cameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES,0, 0, 0,0);
 
         aprilTag = new AprilTagProcessor.Builder()
-                .setCameraPose(camPos, camRot)
+                .setCameraPose(cameraPosition, cameraOrientation)
                 .setDrawTagID(true)
                 .setDrawCubeProjection(false) // Saves CPU
                 .build();
@@ -444,5 +448,34 @@ public class TrackStrafeIdkManShit extends OpMode {
         public void getFrameBitmap(Continuation<? extends Consumer<Bitmap>> cont) {
             cont.dispatch(bc -> bc.accept(lastFrame.get()));
         }
+
+    }
+
+    /**
+     * Converts a measurement from inches to centimeters.
+     * @param inch The value in inches.
+     * @return The value converted to centimeters.
+     */
+    public double inchToCm(double inch) {
+        return inch * 2.54;
+    }
+
+    /**
+     * Converts a measurement from inches to centimeters.
+     * @param cm The value in inches.
+     * @return The value converted to centimeters.
+     */
+    public double cmToInch(double cm) {
+        return cm / 2.54;
+    }
+
+    /**
+     * Converts a measurement from inches to centimeters.
+     * @param mm The value in inches.
+     * @return The value converted to centimeters.
+     */
+    public double mmToInch(double mm) {
+        double cm = mm / 10;
+        return cm / 2.54;
     }
 }
