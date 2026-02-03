@@ -241,6 +241,8 @@ public class RsudAngleFixIniYangBenerCoHold extends LinearOpMode {
         if (turretPos <= -TURRET_LIMIT_TICKS && power < 0) power = 0;
         if (turretPos >=  TURRET_LIMIT_TICKS && power > 0) power = 0;
 
+
+
         turret.setPower(power);
     }
 }

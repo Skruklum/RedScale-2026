@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.messages;
 
-public final class MecanumCommandMessage {
+public final class
+MecanumCommandMessage {
     public long timestamp;
     public double voltage;
     public double leftFrontPower;
