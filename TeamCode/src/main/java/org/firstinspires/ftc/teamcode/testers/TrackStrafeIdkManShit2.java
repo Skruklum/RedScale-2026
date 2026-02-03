@@ -40,8 +40,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Config
-@TeleOp(name ="AprilTag Strafe Idk", group = "Test")
-public class TrackStrafeIdkManShit extends OpMode {
+@TeleOp(name ="AprilTag Strafe Idk2Jembod", group = "Test")
+public class TrackStrafeIdkManShit2 extends OpMode {
 
     /* ================== PID ================== */
     // PID for when we see the tag (needs to be responsive)
