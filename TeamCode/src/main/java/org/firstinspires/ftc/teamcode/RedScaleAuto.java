@@ -4,6 +4,7 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.TranslationalVelConstraint;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
@@ -22,6 +23,23 @@ public class RedScaleAuto extends LinearOpMode {
     private ShooterRotatorController shooterRotatorController;
 
     private MecanumDrive drive;
+
+    // Set this to true for Red Alliance, false for Blue
+    private boolean isBlue = false;
+
+    public Pose2d reflect(double x, double y, double degrees) {
+        return isBlue ? new Pose2d(x, -y, -degrees) : new Pose2d(x, y, degrees);
+    }
+
+    public Vector2d reflectV(double x, double y) {
+        return isBlue ? new Vector2d(x, -y) : new Vector2d(x, y);
+    }
+
+    public double reflect(double value) {
+        return isBlue ? -value : value;
+    }
+
+
     @Override
     public void runOpMode() {
 
@@ -31,45 +49,63 @@ public class RedScaleAuto extends LinearOpMode {
 
         // Initialize your MecanumDrive (this contains your 2-dead wheel localizer)
         // Make sure the starting Pose matches your MeepMeep code exactly
-        Pose2d initialPose = new Pose2d(-60, 35, Math.toRadians(90));
+        Pose2d initialPose = reflect(-60, 35, Math.toRadians(90));
         drive = new MecanumDrive(hardwareMap, initialPose);
         Intake intake = new Intake(hardwareMap);
         Shooter shooter = new Shooter(hardwareMap);
         Stopper stopper = new Stopper(hardwareMap);
+
+        while (true) {
+            if (gamepad1.crossWasPressed()) {
+                isBlue = !isBlue;
+            }
+
+            telemetry.addData("CURRENT TEAM (press cross on gamepad 1 to change):", isBlue ? "BLUE" : "RED");
+            telemetry.update();
+
+            if (isStarted()) {
+                break;
+            }
+            if (isStopRequested()) {
+                break;
+            }
+        }
+
         waitForStart();
+
+        TrajectoryActionBuilder trajectoryActionBuilder = drive.actionBuilder(initialPose)
+                .afterTime(0, () -> {shooterRotatorController.setTargetWorldAngle(reflect(55));})
+                .stopAndAdd(shooter.setState(true))
+                .strafeTo(reflectV(-27.5, 30))
+                .afterTime(0, intake.setPower(1))
+
+                .stopAndAdd(stopper.timedPower(1.0))
+                .waitSeconds(2)
+                .stopAndAdd(stopper.timedPower(-1.0))
+
+                .splineToConstantHeading(reflectV(-1.5, 25), reflect(Math.toRadians(90.00)))
+                .splineToConstantHeading(reflectV(-1.5, 62.5), reflect(Math.toRadians(90.00)))
+                .strafeTo(reflectV(-27.5, 36.5))
+
+                .stopAndAdd(stopper.timedPower(1.0))
+                .waitSeconds(2)
+                .stopAndAdd(stopper.timedPower(-1.0))
+
+                .splineToConstantHeading(reflectV(23, 25), reflect(Math.toRadians(90.00)))
+                .splineToConstantHeading(reflectV(23, 68.5), reflect(Math.toRadians(90.00)))
+                .strafeTo(reflectV(26, 60))
+                .strafeTo(reflectV(-26, 39.5))
+
+                .stopAndAdd(stopper.timedPower(1.0))
+                .afterTime(0, intake.setPower(1))
+                .waitSeconds(2)
+                .stopAndAdd(stopper.timedPower(-1.0));
 
         if (isStopRequested()) return;
 
         // Build and execute the action
-        Action driveAction = drive.actionBuilder(initialPose)
-                .afterTime(0, () -> {shooterRotatorController.setTargetWorldAngle(55);})
-                .stopAndAdd(shooter.setState(true))
-                .strafeTo(new Vector2d(-27.5, 30))
-                .afterTime(0, intake.setPower(1))
-
-                .stopAndAdd(stopper.timedPower(1.0))
-                .waitSeconds(2)
-                .stopAndAdd(stopper.timedPower(-1.0))
-
-                .splineToConstantHeading(new Vector2d(-1.5, 25), Math.toRadians(90.00))
-                .splineToConstantHeading(new Vector2d(-1.5, 62.5), Math.toRadians(90.00))
-                .strafeTo(new Vector2d(-27.5, 36.5))
-
-                .stopAndAdd(stopper.timedPower(1.0))
-                .waitSeconds(2)
-                .stopAndAdd(stopper.timedPower(-1.0))
-
-                .splineToConstantHeading(new Vector2d(23, 25), Math.toRadians(90.00))
-                .splineToConstantHeading(new Vector2d(23, 68.5), Math.toRadians(90.00))
-                .strafeTo(new Vector2d(26, 60))
-                .strafeTo(new Vector2d(-26, 39.5))
-
-                .stopAndAdd(stopper.timedPower(1.0))
-                .afterTime(0, intake.setPower(1))
-                .waitSeconds(2)
-                .stopAndAdd(stopper.timedPower(-1.0))
-
-                        .build();
+        Action driveAction = trajectoryActionBuilder
+                .build();
 
         while (opModeIsActive()) {
             opModeTime.reset();
