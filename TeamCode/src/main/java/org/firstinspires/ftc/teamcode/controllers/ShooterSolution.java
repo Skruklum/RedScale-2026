@@ -11,6 +11,4 @@ public class ShooterSolution {
         this.reachable = possible;
     }
 
-
-
 }

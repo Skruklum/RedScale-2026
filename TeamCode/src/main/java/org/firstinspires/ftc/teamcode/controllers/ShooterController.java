@@ -26,7 +26,7 @@ public class ShooterController {
             double neededRPM = getTargetRPM(distanceCm, angle, targetHeightCm);
 
             // Check if this angle can hit the target under your 4500 RPM limit
-            if (neededRPM > 1500 && neededRPM <= MAX_ALLOWED_RPM) {
+            if (neededRPM > 1000 && neededRPM <= MAX_ALLOWED_RPM) {
                 // We want the angle that requires the LOWEST RPM for maximum motor stability
                 if (neededRPM < minRPM) {
                     minRPM = neededRPM;

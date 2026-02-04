@@ -254,6 +254,10 @@ public class aprilTagLocalization extends OpMode {
 
                     detectedDistance = d.ftcPose.range;
 
+                    double apriltagPoseX = d.ftcPose.x;
+                    double apriltagPoseY = d.ftcPose.y;
+                    double apriltagPoseZ = d.ftcPose.z;
+
                     double detectedX = d.robotPose.getPosition().x;
                     double detectedY = d.robotPose.getPosition().y;
                     double detectedZ = d.robotPose.getPosition().z;
@@ -269,6 +273,11 @@ public class aprilTagLocalization extends OpMode {
                     telemetry.addData("detectedPitch", detectedPitch);
                     telemetry.addData("detectedRoll", detectedRoll);
                     telemetry.addData("detectedYaw", detectedYaw);
+
+                    telemetry.addData("apriltagPoseX", apriltagPoseX);
+                    telemetry.addData("apriltagPoseY", apriltagPoseY);
+                    telemetry.addData("apriltagPoseZ", apriltagPoseZ);
+
 
 
                     mecanumDrive.localizer.setPose(new Pose2d(detectedX, detectedY, Math.toRadians(detectedYaw)));
