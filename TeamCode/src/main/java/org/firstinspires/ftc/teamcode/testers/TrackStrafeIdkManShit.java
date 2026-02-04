@@ -121,6 +121,8 @@ public class TrackStrafeIdkManShit extends OpMode {
     private double targetWorldAngle = 0; // The "World Heading" we want to face
     private double smoothedBearingError = 0;
 
+    private double absAngleTargetAprilTag = 0;
+
     private MecanumDrive mecanumDrive;
 
 
@@ -240,13 +242,12 @@ public class TrackStrafeIdkManShit extends OpMode {
                          robotPoseY = d.robotPose.getPosition().y;
                          robotPoseYaw = d.robotPose.getOrientation().getYaw(AngleUnit.DEGREES);
 
-
                          detectedDistanceInch = d.ftcPose.range;
                          detectedDistanceX_Inch = Math.sin(rawBearing) * detectedDistanceInch;
                          detectedDistanceY_Inch = Math.cos(rawBearing) * detectedDistanceInch;
 
-                        aprilTagX = robotPoseX + (detectedDistanceX_Inch * coordinatePerInchRatio);
-                        aprilTagY = robotPoseY + (detectedDistanceY_Inch * coordinatePerInchRatio);
+                        aprilTagX = d.metadata.fieldPosition.get(0);
+                        aprilTagY = d.metadata.fieldPosition.get(1);
 
                         mecanumDrive.localizer.setPose(new Pose2d(robotPoseX, robotPoseY, Math.toRadians(robotPoseYaw)));
 
@@ -274,17 +275,34 @@ public class TrackStrafeIdkManShit extends OpMode {
                 double robotPoseX = mecanumDrive.localizer.getPose().position.x;
                 double robotPoseY = mecanumDrive.localizer.getPose().position.y;
 
-                double triangleWidth = Math.abs(robotPoseX - aprilTagX);
-                double triangleHeight = Math.abs(robotPoseY - aprilTagY);
-                double triangleHypothenuse = Math.sqrt(Math.pow(triangleWidth, 2) + Math.pow(triangleHeight, 2));
+                double deltaX = (robotPoseX - aprilTagX);
+                double deltaY = (robotPoseY - aprilTagY);
 
-                double errorAngle = Math.toDegrees(Math.asin(triangleWidth / triangleHypothenuse));
+                // Calculate distance for telemetry
+                double distanceToTarget = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+                // Calculate the world angle needed to point at the target
+                // atan2 gives us the correct angle in all quadrants
+                double angleToTarget = Math.toDegrees(Math.atan2(deltaX, deltaY));
+
                 telemetry.addLine("\n--- FIELD ORIENTED LOCK ---");
-                telemetry.addData("Field Oriented aprilTagX ", aprilTagX);
-                telemetry.addData("Field Oriented aprilTagY ", aprilTagY);
+                telemetry.addData("Field Oriented aprilTagX", aprilTagX);
+                telemetry.addData("Field Oriented aprilTagY", aprilTagY);
+                telemetry.addData("Robot X", robotPoseX);
+                telemetry.addData("Robot Y", robotPoseY);
+                telemetry.addData("Delta X", deltaX);
+                telemetry.addData("Delta Y", deltaY);
+                telemetry.addData("Distance to Target", distanceToTarget);
+                telemetry.addData("Calculated Angle to Target", angleToTarget);
 
-                targetWorldAngle =
-                        normalizeAngle(turretAbs + errorAngle);
+                Pose2d currentPose = mecanumDrive.localizer.getPose();
+                double dx = aprilTagX - currentPose.position.x;
+                double dy = aprilTagY - currentPose.position.y;
+
+                // 1. Calculate the absolute world heading needed to face the tag
+                 absAngleTargetAprilTag = Math.toDegrees(Math.atan2(dy, dx));
+                telemetry.addData("absAngleTargetAprilTag", absAngleTargetAprilTag);
+
 
             } else if (!tagVisible && usingVisionGains) {
                 if (smoothedBearingError > 0.5) aimState = AimState.SNAP_TO_BEARING;
