@@ -1,19 +1,38 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.TranslationalVelConstraint;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.teamcode.controllers.RobotPoseController;
+import org.firstinspires.ftc.teamcode.controllers.ShooterRotatorController;
 
 @Autonomous(name = "Red_Scale_Test_Auto_Red", group = "Autonomous")
 public class RedScaleAuto extends LinearOpMode {
+
+    private ElapsedTime opModeTime = new ElapsedTime();
+    private RobotPoseController robotPoseController;
+    private ShooterRotatorController shooterRotatorController;
+
+    private MecanumDrive drive;
     @Override
     public void runOpMode() {
+
+        robotPoseController = new RobotPoseController(hardwareMap);
+        shooterRotatorController = new ShooterRotatorController(hardwareMap, robotPoseController, "shooterRot");
+
+
         // Initialize your MecanumDrive (this contains your 2-dead wheel localizer)
         // Make sure the starting Pose matches your MeepMeep code exactly
-        Pose2d initialPose = new Pose2d(-70, 29, Math.toRadians(90));
-        MecanumDrive drive = new MecanumDrive(hardwareMap, initialPose);
+        Pose2d initialPose = new Pose2d(-60, 35, Math.toRadians(90));
+        drive = new MecanumDrive(hardwareMap, initialPose);
         Intake intake = new Intake(hardwareMap);
         Shooter shooter = new Shooter(hardwareMap);
         Stopper stopper = new Stopper(hardwareMap);
@@ -22,45 +41,55 @@ public class RedScaleAuto extends LinearOpMode {
         if (isStopRequested()) return;
 
         // Build and execute the action
-        Actions.runBlocking(
-                drive.actionBuilder(initialPose)
+        Action driveAction = drive.actionBuilder(initialPose)
+                .afterTime(0, () -> {shooterRotatorController.setTargetWorldAngle(75);})
+                .strafeTo(new Vector2d(-30, 30))
+                .splineToConstantHeading(new Vector2d(-11.27, 25), Math.toRadians(90.00))
+                .splineToConstantHeading(new Vector2d(-11.21, 55), Math.toRadians(90.00))
+                .strafeTo(new Vector2d(-30, 30))
+                .splineToConstantHeading(new Vector2d(15, 25), Math.toRadians(90.00))
+                .splineToConstantHeading(new Vector2d(15, 50), Math.toRadians(90.00))
+                .strafeTo(new Vector2d(-30, 30))
 
-                        .stopAndAdd(shooter.setState(true))
-                        .strafeTo(new Vector2d(-51, 10))
+                        .build();
 
-                        // SHOOTING PART 1
-                        .stopAndAdd(stopper.timedPower(1.0))
-                        .afterTime(0, intake.setPower(1))
-
-                        .waitSeconds(2)
-                        .afterTime(0, intake.setPower(0))
-                        .stopAndAdd(stopper.timedPower(-1.0))
-                        //
-
-                        .splineToConstantHeading(new Vector2d(-20, 31.67), Math.toRadians(90))
-                        .afterTime(0, intake.setPower(1))
-                        .splineToConstantHeading(new Vector2d(-20, 60.28), Math.toRadians(90))
-                        .strafeToConstantHeading(new Vector2d(-51, 10))
-
-                        // SHOOTING PART 2
-                        .stopAndAdd(stopper.timedPower(1.0))
-                        .waitSeconds(2)
-                        .afterTime(0, intake.setPower(0))
-                        .stopAndAdd(stopper.timedPower(-1.0))
-                        //
-
-                        .splineToConstantHeading(new Vector2d(2, 31.67), Math.toRadians(90))
-                        .splineToConstantHeading(new Vector2d(2, 55), Math.toRadians(90))
-                        .strafeToConstantHeading(new Vector2d(-51, 12))
-                            .waitSeconds(0.1)
-
-                        .splineToConstantHeading(new Vector2d(28, 37.67), Math.toRadians(90))
-                        .splineToConstantHeading(new Vector2d(28, 60.28), Math.toRadians(90))
-                        .strafeToConstantHeading(new Vector2d(-51, 15))
-                            .waitSeconds(0.1)
-
-                        .build());
-
-
+        while (opModeIsActive()) {
+            opModeTime.reset();
+            runBlocking(driveAction);
+        }
     }
+
+
+    public void runBlocking(Action action) {
+//        FtcDashboard dash = FtcDashboard.getInstance();
+//        Canvas previewCanvas = new Canvas();
+//        action.preview(previewCanvas);
+
+        boolean running = true;
+        while (running && !Thread.currentThread().isInterrupted()) {
+            TelemetryPacket packet = new TelemetryPacket();
+//            packet.fieldOverlay().getOperations().addAll(previewCanvas.getOperations());
+            packet.put("time", opModeTime);
+
+            robotPoseController.update();
+            shooterRotatorController.update();
+
+            shooterRotatorController.activate();
+
+            running = action.run(packet);
+
+            Pose2d pose = drive.localizer.getPose();
+
+            packet.fieldOverlay().setStroke("#3F51B5");
+            Drawing.drawRobot(packet.fieldOverlay(), pose);
+            FtcDashboard.getInstance().sendTelemetryPacket(packet);
+
+
+//            extendo.runAuto();
+//            lifter.runAuto();
+////            lifter.sendTelemetryAuto(packet);
+//            dash.sendTelemetryPacket(packet);
+        }
+    }
+
 }

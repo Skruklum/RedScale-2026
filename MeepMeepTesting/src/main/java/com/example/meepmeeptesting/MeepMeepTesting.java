@@ -1,6 +1,7 @@
 package com.example.meepmeeptesting;
 
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.TranslationalVelConstraint;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.noahbres.meepmeep.MeepMeep;
 import com.noahbres.meepmeep.roadrunner.DefaultBotBuilder;
@@ -12,27 +13,28 @@ public class MeepMeepTesting {
 
         RoadRunnerBotEntity myBot = new DefaultBotBuilder(meepMeep)
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
-                .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
+                .setConstraints(120, 100, Math.toRadians(180), Math.toRadians(180), 15)
                 .build();
 
         myBot.runAction(myBot.getDrive().actionBuilder(new Pose2d(-70, 29, Math.toRadians(90)))
-                .strafeTo(new Vector2d(-51, 10))
+                .strafeTo(new Vector2d(-33, 27))
+                .strafeTo(new Vector2d(-15, 7.5))
 
                 .splineToConstantHeading(new Vector2d(-20, 31.67), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(-20, 55.28), Math.toRadians(90))
-                .strafeToConstantHeading(new Vector2d(-51, 10))
-                    .waitSeconds(0.1)
+                .splineToConstantHeading(new Vector2d(-20, 55.28), Math.toRadians(90), new TranslationalVelConstraint(20))
+                .strafeTo(new Vector2d(-33, 27),
+                        new TranslationalVelConstraint(60))
+                .waitSeconds(0.1)
 
-                .splineToConstantHeading(new Vector2d(2, 31.67), Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(2, 20), Math.toRadians(90))
                 .splineToConstantHeading(new Vector2d(2, 55.28), Math.toRadians(90))
-                .strafeToConstantHeading(new Vector2d(-51, 10))
-                    .waitSeconds(0.1)
+                .strafeTo(new Vector2d(-33, 27))
+                .waitSeconds(0.1)
 
-                .splineToConstantHeading(new Vector2d(28, 31.67), Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(28, 20), Math.toRadians(90))
                 .splineToConstantHeading(new Vector2d(28, 55.28), Math.toRadians(90))
-                .strafeToConstantHeading(new Vector2d(-51, 10))
-                    .waitSeconds(0.1)
-
+                .strafeTo(new Vector2d(-33, 27))
+                .waitSeconds(0.1)
 
                 .build());
 

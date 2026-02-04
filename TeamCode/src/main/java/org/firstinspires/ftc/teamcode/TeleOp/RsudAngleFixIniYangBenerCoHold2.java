@@ -43,8 +43,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Config
-@TeleOp(name = "RsudAngleFix_Merged_BlueAlliance", group = "TeleOp")
-public class RsudAngleFixIniYangBenerCoHold extends LinearOpMode {
+@TeleOp(name = "RsudAngleFix_Merged_RedAlliance", group = "TeleOp")
+public class RsudAngleFixIniYangBenerCoHold2 extends LinearOpMode {
 
     // =========================================================================
     //                            FILE 1 VARIABLES
@@ -111,7 +111,7 @@ public class RsudAngleFixIniYangBenerCoHold extends LinearOpMode {
     private static final int CAMERA_GAIN = 250;
     private static final float DECIMATION_SEARCH = 2.0f;
 
-    public static int RED_GOAL_TAG_ID = 20;
+    public static int RED_GOAL_TAG_ID = 24;
 
     /* ================== HARDWARE ALIAS ================== */
     private DcMotorEx turretMotor; // Will point to 'turret'
