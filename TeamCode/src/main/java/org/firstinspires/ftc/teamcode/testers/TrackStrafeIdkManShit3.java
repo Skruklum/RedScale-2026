@@ -28,6 +28,7 @@ import org.firstinspires.ftc.robotcore.external.stream.CameraStreamSource;
 import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibration;
 import org.firstinspires.ftc.teamcode.controllers.PIDCoefficients;
 import org.firstinspires.ftc.teamcode.controllers.PIDFController;
+
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.VisionProcessor;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
@@ -40,8 +41,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Config
-@TeleOp(name ="FullStrafe_BLUE_ALLIANCE", group = "Test")
-public class TrackStrafeIdkManShit2 extends OpMode {
+@TeleOp(name ="FullStrafe_RED_ALLIANCE", group = "Test")
+public class TrackStrafeIdkManShit3 extends OpMode {
 
     /* ================== PID ================== */
     // PID for when we see the tag (needs to be responsive)
