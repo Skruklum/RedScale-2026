@@ -59,14 +59,12 @@ public class AutoLockAim2 extends LinearOpMode {
     @Override
     public void runOpMode() {
         robotPoseController = new RobotPoseController(hardwareMap);
-        shooterRotatorController = new ShooterRotatorController(hardwareMap, robotPoseController);
+        shooterRotatorController = new ShooterRotatorController(hardwareMap, robotPoseController, "shooterRot");
         // --- INIT HARDWARE ---
 //        leftMotor = hardwareMap.get(DcMotorEx.class, "left");
 //        rightMotor = hardwareMap.get(DcMotorEx.class, "right");
-        turretMotor = hardwareMap.get(DcMotorEx.class, "shooterRot");
 
         // Motors
-        turretMotor = hardwareMap.get(DcMotorEx.class, "shooterRot");
         frontLeft   = hardwareMap.get(DcMotorEx.class, "front_left_drive");
         frontRight  = hardwareMap.get(DcMotorEx.class, "front_right_drive");
         backLeft    = hardwareMap.get(DcMotorEx.class, "back_left_drive");
@@ -79,10 +77,7 @@ public class AutoLockAim2 extends LinearOpMode {
         backRight.setDirection(DcMotor.Direction.FORWARD);
 
         // Turret Motor
-        turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        turretMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        turretMotor.setDirection(DcMotor.Direction.REVERSE);
-        turretMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
 
         // PID Safety Limit
         pidController.setOutputBounds(-1, 1);
@@ -117,7 +112,7 @@ public class AutoLockAim2 extends LinearOpMode {
 
             shooterRotatorController.update();
             robotPoseController.update();
-            double turretTicks = turretMotor.getCurrentPosition();
+            double turretTicks = shooterRotatorController.getCurrentPosition();
             double turretDegrees = turretTicks / TICKS_PER_DEGREE;
 
 
@@ -136,7 +131,7 @@ public class AutoLockAim2 extends LinearOpMode {
                 isAutoAimActive = !isAutoAimActive;
                 isCircleClicked = true;
                 // If turning off, cut power immediately
-                if (!isAutoAimActive) turretMotor.setPower(0);
+                if (!isAutoAimActive) shooterRotatorController.setPower(0);
             } else if (!gamepad1.circle) {
                 isCircleClicked = false;
             }

@@ -32,8 +32,8 @@ public class ShooterRotatorController {
     public static PIDCoefficients coeffs = new PIDCoefficients(0.03, 0, 0.001);
     PIDFController pidController = new PIDFController(coeffs);
 
-    public ShooterRotatorController(HardwareMap hardwareMap, RobotPoseController robotPoseController) {
-        turretMotor = hardwareMap.get(DcMotorEx.class, "shooterRot");
+    public ShooterRotatorController(HardwareMap hardwareMap, RobotPoseController robotPoseController, String shooterRotName) {
+        turretMotor = hardwareMap.get(DcMotorEx.class, shooterRotName);
         turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         turretMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         turretMotor.setDirection(DcMotor.Direction.REVERSE);
@@ -96,6 +96,14 @@ public class ShooterRotatorController {
         previousError = requiredTurretAngle;
 
 
+    }
+
+    public void setPower(double power) {
+        turretMotor.setPower(power);
+    }
+
+    public double getCurrentPosition() {
+        return turretMotor.getCurrentPosition();
     }
 
     public boolean IsAtLimit() {

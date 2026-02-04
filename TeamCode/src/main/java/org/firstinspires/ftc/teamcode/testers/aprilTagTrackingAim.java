@@ -45,9 +45,10 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+
 @Config
-@TeleOp(name ="AprilTag Strafe Idk", group = "Test")
-public class TrackStrafeIdkManShit extends OpMode {
+@TeleOp(name ="AprilTag Tracking Aim", group = "Test")
+public class aprilTagTrackingAim extends OpMode {
 
     /* ================== RATIO ================== */
     private double coordinatePerInchRatio = 1;
@@ -238,13 +239,13 @@ public class TrackStrafeIdkManShit extends OpMode {
                         targetWorldAngle =
                                 normalizeAngle(turretAbs + smoothedBearingError);
 
-                         robotPoseX = d.robotPose.getPosition().x;
-                         robotPoseY = d.robotPose.getPosition().y;
-                         robotPoseYaw = d.robotPose.getOrientation().getYaw(AngleUnit.DEGREES);
+                        robotPoseX = d.robotPose.getPosition().x;
+                        robotPoseY = d.robotPose.getPosition().y;
+                        robotPoseYaw = d.robotPose.getOrientation().getYaw(AngleUnit.DEGREES);
 
-                         detectedDistanceInch = d.ftcPose.range;
-                         detectedDistanceX_Inch = Math.sin(rawBearing) * detectedDistanceInch;
-                         detectedDistanceY_Inch = Math.cos(rawBearing) * detectedDistanceInch;
+                        detectedDistanceInch = d.ftcPose.range;
+                        detectedDistanceX_Inch = Math.sin(rawBearing) * detectedDistanceInch;
+                        detectedDistanceY_Inch = Math.cos(rawBearing) * detectedDistanceInch;
 
                         aprilTagX = d.metadata.fieldPosition.get(0);
                         aprilTagY = d.metadata.fieldPosition.get(1);
@@ -275,33 +276,44 @@ public class TrackStrafeIdkManShit extends OpMode {
                 double robotPoseX = mecanumDrive.localizer.getPose().position.x;
                 double robotPoseY = mecanumDrive.localizer.getPose().position.y;
 
-                double deltaX = (robotPoseX - aprilTagX);
-                double deltaY = (robotPoseY - aprilTagY);
-
-                // Calculate distance for telemetry
-                double distanceToTarget = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-
-                // Calculate the world angle needed to point at the target
-                // atan2 gives us the correct angle in all quadrants
-                double angleToTarget = Math.toDegrees(Math.atan2(deltaX, deltaY));
+                double turreTarget = calculateTurretTarget(robotPoseX, robotPoseY, robotYaw, RedAlliance_AprilTag_Position.position.x, RedAlliance_AprilTag_Position.position.y);
 
                 telemetry.addLine("\n--- FIELD ORIENTED LOCK ---");
-                telemetry.addData("Field Oriented aprilTagX", aprilTagX);
-                telemetry.addData("Field Oriented aprilTagY", aprilTagY);
-                telemetry.addData("Robot X", robotPoseX);
-                telemetry.addData("Robot Y", robotPoseY);
-                telemetry.addData("Delta X", deltaX);
-                telemetry.addData("Delta Y", deltaY);
-                telemetry.addData("Distance to Target", distanceToTarget);
-                telemetry.addData("Calculated Angle to Target", angleToTarget);
+                telemetry.addData("turret angle target (field oriented)", turreTarget);
 
-                Pose2d currentPose = mecanumDrive.localizer.getPose();
-                double dx = aprilTagX - currentPose.position.x;
-                double dy = aprilTagY - currentPose.position.y;
 
-                // 1. Calculate the absolute world heading needed to face the tag
-                 absAngleTargetAprilTag = Math.toDegrees(Math.atan2(dy, dx));
-                telemetry.addData("absAngleTargetAprilTag", absAngleTargetAprilTag);
+
+//                double robotPoseX = mecanumDrive.localizer.getPose().position.x;
+//                double robotPoseY = mecanumDrive.localizer.getPose().position.y;
+//
+//                double deltaX = (robotPoseX - aprilTagX);
+//                double deltaY = (robotPoseY - aprilTagY);
+//
+//                // Calculate distance for telemetry
+//                double distanceToTarget = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+//
+//                // Calculate the world angle needed to point at the target
+//                // atan2 gives us the correct angle in all quadrants
+//                double angleToTarget = Math.toDegrees(Math.atan2(deltaX, deltaY));
+//
+//                telemetry.addLine("\n--- FIELD ORIENTED LOCK ---");
+//                telemetry.addData("Field Oriented aprilTagX", aprilTagX);
+//                telemetry.addData("Field Oriented aprilTagY", aprilTagY);
+//                telemetry.addData("Robot X", robotPoseX);
+//                telemetry.addData("Robot Y", robotPoseY);
+//                telemetry.addData("Delta X", deltaX);
+//                telemetry.addData("Delta Y", deltaY);
+//                telemetry.addData("Distance to Target", distanceToTarget);
+//                telemetry.addData("Calculated Angle to Target", angleToTarget);
+//
+//                Pose2d currentPose = mecanumDrive.localizer.getPose();
+//                double dx = aprilTagX - currentPose.position.x;
+//                double dy = aprilTagY - currentPose.position.y;
+//
+//                // 1. Calculate the absolute world heading needed to face the tag
+//                absAngleTargetAprilTag = Math.toDegrees(Math.atan2(dy, dx));
+//                telemetry.addData("absAngleTargetAprilTag", absAngleTargetAprilTag);
+
 
 
             } else if (!tagVisible && usingVisionGains) {
@@ -467,6 +479,31 @@ public class TrackStrafeIdkManShit extends OpMode {
             cont.dispatch(bc -> bc.accept(lastFrame.get()));
         }
 
+    }
+
+    /**
+     * Calculates the local turret angle required to point at a field coordinate.
+     *
+     * @param robotX Current field X of the robot
+     * @param robotY Current field Y of the robot
+     * @param robotHeading Current world heading of the robot (-180 to 180)
+     * @param targetX Field X of the AprilTag
+     * @param targetY Field Y of the AprilTag
+     * @return The target angle for the turret relative to the robot body
+     */
+    public double calculateTurretTarget(double robotX, double robotY, double robotHeading, double targetX, double targetY) {
+        // 1. Get the vector from robot to target
+        double deltaX = targetX - robotX;
+        double deltaY = targetY - robotY;
+
+        // 2. Calculate the absolute world angle (Heading to target)
+        double worldAngle = Math.toDegrees(Math.atan2(deltaY, deltaX));
+
+        // 3. Calculate target relative to robot heading
+        double localTarget = worldAngle - robotHeading;
+
+        // 4. Normalize to -180 to 180 for shortest path rotation
+        return normalizeAngle(localTarget);
     }
 
     /**

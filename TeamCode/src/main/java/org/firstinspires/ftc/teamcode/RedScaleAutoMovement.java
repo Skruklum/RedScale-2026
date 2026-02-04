@@ -23,20 +23,24 @@ public class RedScaleAutoMovement extends LinearOpMode {
         // Build and execute the action
         Actions.runBlocking(
                 drive.actionBuilder(initialPose)
-                        .strafeTo(new Vector2d(-51, 10))
-                        .waitSeconds(3)
-                        .strafeTo(new Vector2d(-20  , 25))
-                        .strafeTo(new Vector2d(-20, 65))
-                      //  .splineTo(new Vector2d(12, 60), Math.toRadians(90))
-                        .strafeTo(new Vector2d(-51, 10))
-                        .waitSeconds(3)
-                        //.splineTo(new Vector2d(37.5, 60), Math.toRadians(90))
-                        .strafeTo(new Vector2d(28, 25))
-                        .strafeTo(new Vector2d(28, 65))
+                        .stopAndAdd(shooter.setState(true))
                         .strafeTo(new Vector2d(-51, 10))
 
+                        .splineToConstantHeading(new Vector2d(-20, 31.67), Math.toRadians(90))
+                        .splineToConstantHeading(new Vector2d(-20, 60.28), Math.toRadians(90))
+                        .strafeToConstantHeading(new Vector2d(-51, 10))
+                            .waitSeconds(0.1)
 
-                        .waitSeconds(3)
+                        .splineToConstantHeading(new Vector2d(2, 31.67), Math.toRadians(90))
+                        .splineToConstantHeading(new Vector2d(2, 55), Math.toRadians(90))
+                        .strafeToConstantHeading(new Vector2d(-51, 12))
+                            .waitSeconds(0.1)
+
+
+                        .splineToConstantHeading(new Vector2d(28, 37.67), Math.toRadians(90))
+                        .splineToConstantHeading(new Vector2d(28, 60.28), Math.toRadians(90))
+                        .strafeToConstantHeading(new Vector2d(-51, 15))
+                            .waitSeconds(0.1)
 
                         .build());
 

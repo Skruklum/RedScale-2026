@@ -26,18 +26,25 @@ public class MeepMeepTesting2 {
                 .build();
 
         // Using the mirror functions to flip the original path
-        myBot.runAction(myBot.getDrive().actionBuilder(mirror(-70, 29, 90))
-                .strafeTo(mirrorV(-51, 10))
-                .waitSeconds(3)
-                .strafeTo(mirrorV(-20, 25))
-                .strafeTo(mirrorV(-20, 65))
-                .strafeTo(mirrorV(-51, 10))
-                .waitSeconds(3)
-                .strafeTo(mirrorV(28, 25))
-                .strafeTo(mirrorV(28, 65))
-                .strafeTo(mirrorV(-51, 10))
-                .waitSeconds(3)
-                .build());
+        myBot.runAction(myBot.getDrive().actionBuilder(new Pose2d(-70, 29, Math.toRadians(90)))
+                        .strafeTo(new Vector2d(-29.51, 31.48))
+                        .strafeTo(new Vector2d(-15, 15))
+
+                        .splineToConstantHeading(new Vector2d(-20, 31.67), Math.toRadians(90))
+                        .splineToConstantHeading(new Vector2d(-20, 55.28), Math.toRadians(90))
+                        .strafeTo(new Vector2d(-29.51, 31.48))
+
+                        .splineToConstantHeading(new Vector2d(2, 31.67), Math.toRadians(90))
+                        .splineToConstantHeading(new Vector2d(2, 55.28), Math.toRadians(90))
+                        .strafeTo(new Vector2d(-29.51, 31.48))
+                        .waitSeconds(0.1)
+
+                        .splineToConstantHeading(new Vector2d(28, 31.67), Math.toRadians(90))
+                        .splineToConstantHeading(new Vector2d(28, 55.28), Math.toRadians(90))
+                        .strafeTo(new Vector2d(-29.51, 31.48))
+                        .waitSeconds(0.1)
+
+                        .build());
 
         meepMeep.setBackground(MeepMeep.Background.FIELD_DECODE_JUICE_DARK)
                 .setDarkMode(true)

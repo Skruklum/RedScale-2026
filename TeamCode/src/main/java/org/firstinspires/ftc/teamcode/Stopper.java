@@ -15,21 +15,19 @@ public class Stopper {
         stopperServo.setDirection(DcMotor.Direction.FORWARD);
     }
 
-    // This is your new automatic toggle function
     public Action timedPower(double power) {
         return new Action() {
             private long startTime = 0;
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
-                // Initialize start time on the first loop
                 if (startTime == 0) {
                     startTime = System.currentTimeMillis();
                 }
 
                 long elapsedTime = System.currentTimeMillis() - startTime;
 
-                if (elapsedTime < 1500) { // 1.5 seconds
+                if (elapsedTime < 1500) {
                     stopperServo.setPower(power);
                     packet.put("Stopper Status", power > 0 ? "Forward" : "Reverse");
                     packet.put("Stopper Time Left", (1500 - elapsedTime) / 1000.0);
