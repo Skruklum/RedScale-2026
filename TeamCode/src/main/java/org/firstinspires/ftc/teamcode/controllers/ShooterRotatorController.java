@@ -98,6 +98,10 @@ public class ShooterRotatorController {
 
     }
 
+    public void setPower(double power) {
+        turretMotor.setPower(power);
+    }
+
     public double getCurrentPosition() {
         return turretMotor.getCurrentPosition();
     }

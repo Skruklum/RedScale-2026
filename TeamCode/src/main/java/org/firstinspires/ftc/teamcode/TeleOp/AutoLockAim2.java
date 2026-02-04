@@ -131,7 +131,7 @@ public class AutoLockAim2 extends LinearOpMode {
                 isAutoAimActive = !isAutoAimActive;
                 isCircleClicked = true;
                 // If turning off, cut power immediately
-                if (!isAutoAimActive) turretMotor.setPower(0);
+                if (!isAutoAimActive) shooterRotatorController.setPower(0);
             } else if (!gamepad1.circle) {
                 isCircleClicked = false;
             }
