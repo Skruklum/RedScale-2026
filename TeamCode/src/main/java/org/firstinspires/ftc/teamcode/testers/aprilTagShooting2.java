@@ -166,8 +166,9 @@ public class aprilTagShooting2 extends OpMode {
         backRight.setPower((y + x - rx) / max);
 
         // ===== INTAKE =====
-        double intakePower = gamepad1.right_trigger - gamepad1.left_trigger;
-        intakeMotor.setPower(Range.clip(intakePower, -1.0, 1.0));
+        if (gamepad1.right_bumper) intakeMotor.setPower(1);
+        else if (gamepad1.left_bumper) intakeMotor.setPower(-1);
+        else intakeMotor.setPower(0);
 
         // --- Alliance Toggle ---
         boolean currentDpadDown = gamepad1.dpad_down;

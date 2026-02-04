@@ -6,27 +6,22 @@ import com.noahbres.meepmeep.MeepMeep;
 import com.noahbres.meepmeep.roadrunner.DefaultBotBuilder;
 import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
 
-public class MeepMeepTesting3 {
+public class MeepMeepTesting4 {
     public static void main(String[] args) {
         MeepMeep meepMeep = new MeepMeep(800);
 
         RoadRunnerBotEntity myBot = new DefaultBotBuilder(meepMeep)
+                // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
                 .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
                 .build();
 
-
-        myBot.runAction(myBot.getDrive().actionBuilder(new Pose2d(-61.85, 32.01, Math.toRadians(90)))
-                .strafeTo(new Vector2d(-51, 10))
-
-
-                .splineToConstantHeading(new Vector2d(-12.95, 30.56), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(-12.95, 55.63), Math.toRadians(90.00))
-                .strafeTo(new Vector2d(-51, 10))
+        myBot.runAction(myBot.getDrive().actionBuilder(new Pose2d(-50, 50, Math.toRadians(135)))
+                .strafeTo(new Vector2d(-29.51, 31.48))
+                .strafeTo(new Vector2d(-11, 10))
+                .splineToConstantHeading(new Vector2d(-11.52, 30.86), Math.toRadians(82.99))
+                .splineToConstantHeading(new Vector2d(-11.61, 56.46), Math.toRadians(93.28))
 
 
-                .splineToConstantHeading(new Vector2d(12.95, 29.94), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(12.54, 55.42), Math.toRadians(90))
-                .strafeTo(new Vector2d(-51, 10))
 
 
                 .build());
