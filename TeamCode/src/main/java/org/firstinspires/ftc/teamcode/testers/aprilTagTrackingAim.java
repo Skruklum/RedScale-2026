@@ -277,6 +277,46 @@ public class aprilTagTrackingAim extends OpMode {
                         if (Math.abs(smoothedBearingError) < 0.5) {
                             aimState = AimState.LOCK_WORLD;
                         }
+                        /**
+                         *     // 1. NEGATE the bearing to match your CCW-positive system
+                         *     // (If tag is 10° Right, rawBearing is +10, so we use -10)
+                         *     double standardBearing = -rawBearing;
+                         *
+                         *     // 2. Update the target world angle correctly
+                         *     targetWorldAngle = normalizeAngle(turretAbs + standardBearing);
+                         *
+                         *     robotPoseX = d.robotPose.getPosition().x;
+                         *     robotPoseY = d.robotPose.getPosition().y;
+                         *     robotPoseYaw = d.robotPose.getOrientation().getYaw(AngleUnit.DEGREES);
+                         *
+                         *     detectedDistanceInch = d.ftcPose.range;
+                         *
+                         *     // --- MATHEMATICAL APRILTAG CALCULATION ---
+                         *
+                         *     // 3. Absolute world angle to tag (Turret Heading + Relative Bearing)
+                         *     double worldAngleToTagDeg = normalizeAngle(turretAbs + standardBearing);
+                         *     double worldAngleToTagRad = Math.toRadians(worldAngleToTagDeg);
+                         *
+                         *     // 4. Camera offset on the turret
+                         *     double cx = -21.5 / 2.54;
+                         *     double cy = 3.911 / 10 / 2.54;
+                         *
+                         *     double turretAbsRad = Math.toRadians(turretAbs);
+                         *     double camXOffsetWorld = cx * Math.cos(turretAbsRad) - cy * Math.sin(turretAbsRad);
+                         *     double camYOffsetWorld = cx * Math.sin(turretAbsRad) + cy * Math.cos(turretAbsRad);
+                         *
+                         *     // 5. Final Field Coordinates (Using sin/cos correctly for CCW Positive)
+                         *     // X is Forward (cos), Y is Left (sin)
+                         *     aprilTagX = robotPoseX + camXOffsetWorld + (Math.cos(worldAngleToTagRad) * detectedDistanceInch);
+                         *     aprilTagY = robotPoseY + camYOffsetWorld + (Math.sin(worldAngleToTagRad) * detectedDistanceInch);
+                         *
+                         *     mecanumDrive.localizer.setPose(new Pose2d(robotPoseX, robotPoseY, Math.toRadians(robotPoseYaw)));
+                         *
+                         *     if (Math.abs(smoothedBearingError) < 0.5) {
+                         *         aimState = AimState.LOCK_WORLD;
+                         *     }
+                         * }
+                         */
 
                     }
 
