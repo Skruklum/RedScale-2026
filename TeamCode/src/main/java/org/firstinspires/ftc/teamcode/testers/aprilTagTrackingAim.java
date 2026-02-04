@@ -236,26 +236,88 @@ public class aprilTagTrackingAim extends OpMode {
                                     smoothedBearingError * (1.0 - SMOOTHING_ALPHA);
 
                     if (aimState == AimState.SNAP_TO_BEARING) {
-                        targetWorldAngle =
-                                normalizeAngle(turretAbs + smoothedBearingError);
+                        targetWorldAngle = normalizeAngle(turretAbs + smoothedBearingError);
 
                         robotPoseX = d.robotPose.getPosition().x;
                         robotPoseY = d.robotPose.getPosition().y;
                         robotPoseYaw = d.robotPose.getOrientation().getYaw(AngleUnit.DEGREES);
 
                         detectedDistanceInch = d.ftcPose.range;
-                        detectedDistanceX_Inch = Math.sin(rawBearing) * detectedDistanceInch;
-                        detectedDistanceY_Inch = Math.cos(rawBearing) * detectedDistanceInch;
 
-                        aprilTagX = d.metadata.fieldPosition.get(0);
-                        aprilTagY = d.metadata.fieldPosition.get(1);
+                        // --- MATHEMATICAL APRILTAG CALCULATION ---
+
+                        // 1. The absolute world angle from the camera to the tag
+                        double worldAngleToTagRad = Math.toRadians(normalizeAngle(turretAbs + rawBearing));
+
+                        // 2. Camera offset on the turret (from your initVision)
+                        // We convert your cm/mm values to inches
+                        double cx = -21.5 / 2.54; // -8.46 inches
+                        double cy = 3.911 / 10 / 2.54; // 1.54 inches
+
+                        // 3. Rotate the camera offset by the turret's world orientation
+                        // This finds where the camera is on the field relative to the robot center
+                        double turretAbsRad = Math.toRadians(turretAbs);
+                        double camXOffsetWorld = cx * Math.cos(turretAbsRad) - cy * Math.sin(turretAbsRad);
+                        double camYOffsetWorld = cx * Math.sin(turretAbsRad) + cy * Math.cos(turretAbsRad);
+
+                        // 4. Calculate the tag's position relative to the camera in world coordinates
+                        double tagXOffsetWorld = Math.cos(worldAngleToTagRad) * detectedDistanceInch;
+                        double tagYOffsetWorld = Math.sin(worldAngleToTagRad) * detectedDistanceInch;
+
+                        // 5. Final Field Coordinates
+                        aprilTagX = robotPoseX + camXOffsetWorld + tagXOffsetWorld;
+                        aprilTagY = robotPoseY + camYOffsetWorld + tagYOffsetWorld;
+
+                        // Optional: Local distances for telemetry
+                        detectedDistanceX_Inch = tagXOffsetWorld;
+                        detectedDistanceY_Inch = tagYOffsetWorld;
 
                         mecanumDrive.localizer.setPose(new Pose2d(robotPoseX, robotPoseY, Math.toRadians(robotPoseYaw)));
-
 
                         if (Math.abs(smoothedBearingError) < 0.5) {
                             aimState = AimState.LOCK_WORLD;
                         }
+                        /**
+                         *     // 1. NEGATE the bearing to match your CCW-positive system
+                         *     // (If tag is 10° Right, rawBearing is +10, so we use -10)
+                         *     double standardBearing = -rawBearing;
+                         *
+                         *     // 2. Update the target world angle correctly
+                         *     targetWorldAngle = normalizeAngle(turretAbs + standardBearing);
+                         *
+                         *     robotPoseX = d.robotPose.getPosition().x;
+                         *     robotPoseY = d.robotPose.getPosition().y;
+                         *     robotPoseYaw = d.robotPose.getOrientation().getYaw(AngleUnit.DEGREES);
+                         *
+                         *     detectedDistanceInch = d.ftcPose.range;
+                         *
+                         *     // --- MATHEMATICAL APRILTAG CALCULATION ---
+                         *
+                         *     // 3. Absolute world angle to tag (Turret Heading + Relative Bearing)
+                         *     double worldAngleToTagDeg = normalizeAngle(turretAbs + standardBearing);
+                         *     double worldAngleToTagRad = Math.toRadians(worldAngleToTagDeg);
+                         *
+                         *     // 4. Camera offset on the turret
+                         *     double cx = -21.5 / 2.54;
+                         *     double cy = 3.911 / 10 / 2.54;
+                         *
+                         *     double turretAbsRad = Math.toRadians(turretAbs);
+                         *     double camXOffsetWorld = cx * Math.cos(turretAbsRad) - cy * Math.sin(turretAbsRad);
+                         *     double camYOffsetWorld = cx * Math.sin(turretAbsRad) + cy * Math.cos(turretAbsRad);
+                         *
+                         *     // 5. Final Field Coordinates (Using sin/cos correctly for CCW Positive)
+                         *     // X is Forward (cos), Y is Left (sin)
+                         *     aprilTagX = robotPoseX + camXOffsetWorld + (Math.cos(worldAngleToTagRad) * detectedDistanceInch);
+                         *     aprilTagY = robotPoseY + camYOffsetWorld + (Math.sin(worldAngleToTagRad) * detectedDistanceInch);
+                         *
+                         *     mecanumDrive.localizer.setPose(new Pose2d(robotPoseX, robotPoseY, Math.toRadians(robotPoseYaw)));
+                         *
+                         *     if (Math.abs(smoothedBearingError) < 0.5) {
+                         *         aimState = AimState.LOCK_WORLD;
+                         *     }
+                         * }
+                         */
+
                     }
 
                     // 5. SWITCH PID GAINS (Vision is noisy, needs different gains)

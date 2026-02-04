@@ -351,6 +351,8 @@ public class TrackStrafeIdkManShit extends OpMode {
         /* ================== DEBUGGING TELEMETRY ================== */
         // Status
         telemetry.addData("Mode", isAutoAim ? "AUTO AIM" : "MANUAL");
+        telemetry.addData("fieldOrientedLock", fieldOrientedLock);
+
         telemetry.addData("Tag Visible", tagVisible);
         telemetry.addData("AimState", aimState);
 
