@@ -24,48 +24,40 @@ public class RedScaleAuto extends LinearOpMode {
         // Build and execute the action
         Actions.runBlocking(
                 drive.actionBuilder(initialPose)
+
                         .stopAndAdd(shooter.setState(true))
-                        .stopAndAdd(shooter.waitUntilReady())
-                        .afterTime(0, intake.setPower(1.0))
                         .strafeTo(new Vector2d(-51, 10))
 
+                        // SHOOTING PART 1
+                        .stopAndAdd(stopper.timedPower(1.0))
+                        .afterTime(0, intake.setPower(1))
 
-                        //SHOOTING PART 1
+                        .waitSeconds(2)
+                        .afterTime(0, intake.setPower(0))
+                        .stopAndAdd(stopper.timedPower(-1.0))
+                        //
+
+                        .splineToConstantHeading(new Vector2d(-20, 31.67), Math.toRadians(90))
+                        .afterTime(0, intake.setPower(1))
+                        .splineToConstantHeading(new Vector2d(-20, 60.28), Math.toRadians(90))
+                        .strafeToConstantHeading(new Vector2d(-51, 10))
+
+                        // SHOOTING PART 2
                         .stopAndAdd(stopper.timedPower(1.0))
                         .waitSeconds(2)
                         .afterTime(0, intake.setPower(0))
                         .stopAndAdd(stopper.timedPower(-1.0))
                         //
 
+                        .splineToConstantHeading(new Vector2d(2, 31.67), Math.toRadians(90))
+                        .splineToConstantHeading(new Vector2d(2, 55), Math.toRadians(90))
+                        .strafeToConstantHeading(new Vector2d(-51, 12))
+                            .waitSeconds(0.1)
 
-                        .strafeTo(new Vector2d(-20  , 25))
-                        .afterTime(0, intake.setPower(1))
-                        .strafeTo(new Vector2d(-20, 65))
-                        .strafeTo(new Vector2d(-51, 10))
-
-
-                        //SHOOTING PART 2
-                        .stopAndAdd(stopper.timedPower(1.0))
-                        .waitSeconds(2)
-                        .stopAndAdd(stopper.timedPower(-1.0))
-                        .afterTime(0, intake.setPower(0))
-                        //
-
-
-
-                        //.splineTo(new Vector2d(37.5, 60), Math.toRadians(90))
-                        .strafeTo(new Vector2d(28, 25))
-                        .afterTime(0, intake.setPower(1))
-                        .strafeTo(new Vector2d(28, 65))
-                        .afterTime(0, intake.setPower(0))
-                        .strafeTo(new Vector2d(-45, 4))
-
-
-                        //SHOOTING PART 3
-                        .afterTime(0, intake.setPower(1.0))
-                        .stopAndAdd(stopper.timedPower(1.0))
-                        .waitSeconds(2)
-                        //
+                        .splineToConstantHeading(new Vector2d(28, 37.67), Math.toRadians(90))
+                        .splineToConstantHeading(new Vector2d(28, 60.28), Math.toRadians(90))
+                        .strafeToConstantHeading(new Vector2d(-51, 15))
+                            .waitSeconds(0.1)
 
                         .build());
 

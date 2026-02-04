@@ -13,7 +13,7 @@ public class Shooter {
 
     // Constants for HD Hex (No Gearbox)
     private static final double TICKS_PER_REV = 28.0;
-    private static final double TARGET_RPM = 3000.0;
+    private static final double TARGET_RPM = 2950.0;
     // (3000 / 60) * 28 = 1400 ticks/sec
     private static final double TARGET_VELO = (TARGET_RPM / 60.0) * TICKS_PER_REV;
 
@@ -39,8 +39,6 @@ public class Shooter {
                     shooterMotor.setVelocity(0);
                 }
 
-                // This sends the "Shooter On" status to your Driver Hub screen
-                packet.put("Shooter State", on ? "READY/ON" : "OFF");
 
                 return false; // Action finishes immediately
             }
