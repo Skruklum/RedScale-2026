@@ -42,14 +42,32 @@ public class RedScaleAuto extends LinearOpMode {
 
         // Build and execute the action
         Action driveAction = drive.actionBuilder(initialPose)
-                .afterTime(0, () -> {shooterRotatorController.setTargetWorldAngle(75);})
-                .strafeTo(new Vector2d(-30, 30))
-                .splineToConstantHeading(new Vector2d(-11.27, 25), Math.toRadians(90.00))
-                .splineToConstantHeading(new Vector2d(-11.21, 55), Math.toRadians(90.00))
-                .strafeTo(new Vector2d(-30, 30))
-                .splineToConstantHeading(new Vector2d(15, 25), Math.toRadians(90.00))
-                .splineToConstantHeading(new Vector2d(15, 50), Math.toRadians(90.00))
-                .strafeTo(new Vector2d(-30, 30))
+                .afterTime(0, () -> {shooterRotatorController.setTargetWorldAngle(55);})
+                .stopAndAdd(shooter.setState(true))
+                .strafeTo(new Vector2d(-27.5, 30))
+                .afterTime(0, intake.setPower(1))
+
+                .stopAndAdd(stopper.timedPower(1.0))
+                .waitSeconds(2)
+                .stopAndAdd(stopper.timedPower(-1.0))
+
+                .splineToConstantHeading(new Vector2d(-1.5, 25), Math.toRadians(90.00))
+                .splineToConstantHeading(new Vector2d(-1.5, 62.5), Math.toRadians(90.00))
+                .strafeTo(new Vector2d(-27.5, 36.5))
+
+                .stopAndAdd(stopper.timedPower(1.0))
+                .waitSeconds(2)
+                .stopAndAdd(stopper.timedPower(-1.0))
+
+                .splineToConstantHeading(new Vector2d(23, 25), Math.toRadians(90.00))
+                .splineToConstantHeading(new Vector2d(23, 68.5), Math.toRadians(90.00))
+                .strafeTo(new Vector2d(26, 60))
+                .strafeTo(new Vector2d(-26, 39.5))
+
+                .stopAndAdd(stopper.timedPower(1.0))
+                .afterTime(0, intake.setPower(1))
+                .waitSeconds(2)
+                .stopAndAdd(stopper.timedPower(-1.0))
 
                         .build();
 

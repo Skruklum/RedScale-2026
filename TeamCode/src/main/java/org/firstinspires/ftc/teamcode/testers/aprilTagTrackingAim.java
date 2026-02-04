@@ -74,7 +74,7 @@ public class aprilTagTrackingAim extends OpMode {
     private static final int CAMERA_GAIN = 250;
     private static final float DECIMATION_SEARCH = 2.0f;
 
-    public static int RED_GOAL_TAG_ID = 20;
+    public static int RED_GOAL_TAG_ID = 24;
 
     /* ================== HARDWARE ================== */
     private DcMotorEx turretMotor;
@@ -218,7 +218,8 @@ public class aprilTagTrackingAim extends OpMode {
 
             // Loop through detections to find our specific Tag ID
             for (AprilTagDetection d : detections) {
-                if (d.metadata != null && d.id == RED_GOAL_TAG_ID) {
+                telemetry.addData("april tag ID",d.metadata.id );
+                if (d.metadata != null ) {
 
 
                     tagVisible = true;
