@@ -87,36 +87,33 @@ public class RedScaleAuto_AprilTag extends LinearOpMode {
                     double robotPoleX = detectedAprilTag.robotPose.getPosition().x;
                     double robotPoleY = detectedAprilTag.robotPose.getPosition().y;
                     double robotPoleZ = detectedAprilTag.robotPose.getPosition().z;
-
                     double detectedYaw = detectedAprilTag.robotPose.getOrientation().getYaw(AngleUnit.DEGREES);
 
                     drive.localizer.setPose(new Pose2d(robotPoleX, robotPoleY, Math.toRadians(detectedYaw)));
-
-
                 })
-                .strafeTo(reflectV(-27.5, 30))
+                .strafeTo(reflectV(-27.5, 30));
 //                .afterTime(0, intake.setPower(1))
 
 //                .stopAndAdd(stopper.timedPower(1.0))
-                .waitSeconds(2)
-//                .stopAndAdd(stopper.timedPower(-1.0))
-
-                .splineToConstantHeading(reflectV(-1.5, 25), reflect(Math.toRadians(90.00)))
-                .splineToConstantHeading(reflectV(-1.5, 62.5), reflect(Math.toRadians(90.00)))
-                .strafeTo(reflectV(-27.5, 36.5))
-
-//                .stopAndAdd(stopper.timedPower(1.0))
-                .waitSeconds(2)
-//                .stopAndAdd(stopper.timedPower(-1.0))
-
-                .splineToConstantHeading(reflectV(23, 25), reflect(Math.toRadians(90.00)))
-                .splineToConstantHeading(reflectV(23, 68.5), reflect(Math.toRadians(90.00)))
-                .strafeTo(reflectV(26, 60))
-                .strafeTo(reflectV(-26, 39.5))
-
-//                .stopAndAdd(stopper.timedPower(1.0))
-                .afterTime(0, intake.setPower(1))
-                .waitSeconds(2);
+//                .waitSeconds(2)
+////                .stopAndAdd(stopper.timedPower(-1.0))
+//
+//                .splineToConstantHeading(reflectV(-1.5, 25), reflect(Math.toRadians(90.00)))
+//                .splineToConstantHeading(reflectV(-1.5, 62.5), reflect(Math.toRadians(90.00)))
+//                .strafeTo(reflectV(-27.5, 36.5))
+//
+////                .stopAndAdd(stopper.timedPower(1.0))
+//                .waitSeconds(2)
+////                .stopAndAdd(stopper.timedPower(-1.0))
+//
+//                .splineToConstantHeading(reflectV(23, 25), reflect(Math.toRadians(90.00)))
+//                .splineToConstantHeading(reflectV(23, 68.5), reflect(Math.toRadians(90.00)))
+//                .strafeTo(reflectV(26, 60))
+//                .strafeTo(reflectV(-26, 39.5))
+//
+////                .stopAndAdd(stopper.timedPower(1.0))
+//                .afterTime(0, intake.setPower(1))
+//                .waitSeconds(2);
 //                .stopAndAdd(stopper.timedPower(-1.0));
 
         if (isStopRequested()) return;
