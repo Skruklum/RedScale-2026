@@ -84,16 +84,14 @@ public class RedScaleAuto_AprilTag extends LinearOpMode {
 //                .stopAndAdd(shooter.setState(true))
                 .stopAndAdd(() -> {
                     AprilTagDetection detectedAprilTag = visionCamera.getAprilTag();
+                    double robotPoleX = detectedAprilTag.robotPose.getPosition().x;
+                    double robotPoleY = detectedAprilTag.robotPose.getPosition().y;
+                    double robotPoleZ = detectedAprilTag.robotPose.getPosition().z;
 
-                    if (detectedAprilTag != null) {
-                        double robotPoleX = detectedAprilTag.robotPose.getPosition().x;
-                        double robotPoleY = detectedAprilTag.robotPose.getPosition().y;
-                        double robotPoleZ = detectedAprilTag.robotPose.getPosition().z;
+                    double detectedYaw = detectedAprilTag.robotPose.getOrientation().getYaw(AngleUnit.DEGREES);
 
-                        double detectedYaw = detectedAprilTag.robotPose.getOrientation().getYaw(AngleUnit.DEGREES);
+                    drive.localizer.setPose(new Pose2d(robotPoleX, robotPoleY, Math.toRadians(detectedYaw)));
 
-                        drive.localizer.setPose(new Pose2d(robotPoleX, robotPoleY, Math.toRadians(detectedYaw)));
-                    }
 
                 })
                 .strafeTo(reflectV(-27.5, 30))
