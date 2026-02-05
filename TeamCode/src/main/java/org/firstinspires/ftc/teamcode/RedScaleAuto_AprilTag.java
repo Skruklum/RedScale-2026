@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import androidx.annotation.NonNull;
+
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
@@ -42,6 +44,74 @@ public class RedScaleAuto_AprilTag extends LinearOpMode {
         return isBlue ? -value : value;
     }
 
+    /**
+     * Custom Action that updates robot pose using AprilTag detection.
+     * This runs during autonomous execution, not during trajectory build time.
+     * Returns true (keep running) until an AprilTag is detected or timeout occurs.
+     */
+    private final class UpdatePoseFromAprilTagAction implements Action {
+        private final long timeoutMs;
+        private long startTime = -1;
+
+        /**
+         * @param timeoutMs Maximum time to wait for AprilTag detection (0 = single check, no wait)
+         */
+        UpdatePoseFromAprilTagAction(long timeoutMs) {
+            this.timeoutMs = timeoutMs;
+        }
+
+        @Override
+        public boolean run(@NonNull TelemetryPacket packet) {
+            // Initialize start time on first run
+            if (startTime < 0) {
+                startTime = System.currentTimeMillis();
+            }
+
+            AprilTagDetection detectedAprilTag = visionCamera.getAprilTag();
+
+            if (detectedAprilTag != null) {
+                double robotPoleX = detectedAprilTag.robotPose.getPosition().x;
+                double robotPoleY = detectedAprilTag.robotPose.getPosition().y;
+                double detectedYaw = detectedAprilTag.robotPose.getOrientation().getYaw(AngleUnit.DEGREES);
+
+                drive.localizer.setPose(new Pose2d(robotPoleX, robotPoleY, Math.toRadians(detectedYaw)));
+
+                packet.put("robotPoleX", robotPoleX);
+                packet.put("robotPoleY", robotPoleY);
+                packet.put("detectedYaw", detectedYaw);
+
+
+                packet.put("AprilTag", "Pose updated");
+                return false; // Action complete - AprilTag found
+            }
+
+            // Check timeout
+            if (System.currentTimeMillis() - startTime >= timeoutMs) {
+                packet.put("AprilTag", "Timeout - no detection");
+                return false; // Action complete - timeout reached
+            }
+
+            packet.put("AprilTag", "Searching...");
+            return true; // Keep running - still searching
+        }
+    }
+
+    /**
+     * Creates an action to update pose from AprilTag after trajectory completion.
+     * @param timeoutMs How long to wait for detection (milliseconds)
+     */
+    private Action updatePoseFromAprilTag(long timeoutMs) {
+        return new UpdatePoseFromAprilTagAction(timeoutMs);
+    }
+
+    /**
+     * Creates an action for a single AprilTag check (no waiting).
+     */
+    private Action updatePoseFromAprilTag() {
+        return new UpdatePoseFromAprilTagAction(0);
+    }
+
+
 
     @Override
     public void runOpMode() {
@@ -80,40 +150,34 @@ public class RedScaleAuto_AprilTag extends LinearOpMode {
         waitForStart();
 
         TrajectoryActionBuilder trajectoryActionBuilder = drive.actionBuilder(initialPose)
-                .afterTime(0, () -> {shooterRotatorController.setTargetWorldAngle(reflect(55));})
-//                .stopAndAdd(shooter.setState(true))
-                .stopAndAdd(() -> {
-                    AprilTagDetection detectedAprilTag = visionCamera.getAprilTag();
-                    double robotPoleX = detectedAprilTag.robotPose.getPosition().x;
-                    double robotPoleY = detectedAprilTag.robotPose.getPosition().y;
-                    double robotPoleZ = detectedAprilTag.robotPose.getPosition().z;
-                    double detectedYaw = detectedAprilTag.robotPose.getOrientation().getYaw(AngleUnit.DEGREES);
+                .strafeTo(reflectV(-27.5, 30))
 
-                    drive.localizer.setPose(new Pose2d(robotPoleX, robotPoleY, Math.toRadians(detectedYaw)));
-                })
-                .strafeTo(reflectV(-27.5, 30));
+                .stopAndAdd(updatePoseFromAprilTag(500))
+                .waitSeconds(2)
+
+                .strafeTo(reflectV(-27.5, 30))
 //                .afterTime(0, intake.setPower(1))
 
 //                .stopAndAdd(stopper.timedPower(1.0))
-//                .waitSeconds(2)
-////                .stopAndAdd(stopper.timedPower(-1.0))
-//
-//                .splineToConstantHeading(reflectV(-1.5, 25), reflect(Math.toRadians(90.00)))
-//                .splineToConstantHeading(reflectV(-1.5, 62.5), reflect(Math.toRadians(90.00)))
-//                .strafeTo(reflectV(-27.5, 36.5))
-//
-////                .stopAndAdd(stopper.timedPower(1.0))
-//                .waitSeconds(2)
-////                .stopAndAdd(stopper.timedPower(-1.0))
-//
-//                .splineToConstantHeading(reflectV(23, 25), reflect(Math.toRadians(90.00)))
-//                .splineToConstantHeading(reflectV(23, 68.5), reflect(Math.toRadians(90.00)))
-//                .strafeTo(reflectV(26, 60))
-//                .strafeTo(reflectV(-26, 39.5))
-//
-////                .stopAndAdd(stopper.timedPower(1.0))
-//                .afterTime(0, intake.setPower(1))
-//                .waitSeconds(2);
+                .waitSeconds(2)
+//                .stopAndAdd(stopper.timedPower(-1.0))
+
+                .splineToConstantHeading(reflectV(-1.5, 25), reflect(Math.toRadians(90.00)))
+                .splineToConstantHeading(reflectV(-1.5, 62.5), reflect(Math.toRadians(90.00)))
+                .strafeTo(reflectV(-27.5, 36.5))
+
+//                .stopAndAdd(stopper.timedPower(1.0))
+                .waitSeconds(2)
+//                .stopAndAdd(stopper.timedPower(-1.0))
+
+                .splineToConstantHeading(reflectV(23, 25), reflect(Math.toRadians(90.00)))
+                .splineToConstantHeading(reflectV(23, 68.5), reflect(Math.toRadians(90.00)))
+                .strafeTo(reflectV(26, 60))
+                .strafeTo(reflectV(-26, 39.5))
+
+//                .stopAndAdd(stopper.timedPower(1.0))
+                .afterTime(0, intake.setPower(1))
+                .waitSeconds(2);
 //                .stopAndAdd(stopper.timedPower(-1.0));
 
         if (isStopRequested()) return;
