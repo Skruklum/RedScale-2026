@@ -1,5 +1,9 @@
 package org.firstinspires.ftc.teamcode.controllers;
 
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+
 public class ShooterController {
     private double SHOOTER_MOTOR_COUNTS_PER_REV = 28.0;
     private double SHOOTER_HEIGHT = 35; // in cm
@@ -11,8 +15,52 @@ public class ShooterController {
     private double SHOOTER_ANGLE_MAXIMUM = 38.0;
     private double SHOOTER_ANGLE_MAXIMUM_POS = 0.6415;
 
+    private boolean isActive = true;
+
+    public static double P = 0;
+    public static double F = 0.00017;
+    public static PIDCoefficients coeffs = new PIDCoefficients(P, 0, 0.003, 0.0003, 0, 0.001);
+    public static PIDFController pidfController = new PIDFController(coeffs, (d, v) -> {
+        if (v != null) {
+            return v*F;
+        }
+        return 0;
+    });
+
+    private DcMotorEx shooterMotor;
+
     public ShooterController() {
 
+    }
+
+    public ShooterController(HardwareMap hardwareMap, String shooterDeviceName) {
+        shooterMotor.setDirection(DcMotor.Direction.REVERSE);
+        shooterMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        pidfController.setOutputBounds(-1, 1);
+    }
+
+    public void setInactive() {
+        this.isActive = false;
+    }
+
+    public void setActive() {
+        this.isActive = true;
+    }
+
+
+    public void setVelocity(double targetVelocity) {
+        pidfController.targetVelocity = targetVelocity;
+    }
+
+    public void setPosition(double targetPosition) {
+        pidfController.targetPosition = targetPosition;
+    }
+
+    public void update() {
+       if (!isActive) {
+           double power = pidfController.update(System.nanoTime(), 0, shooterMotor.getVelocity());
+           shooterMotor.setPower(power);
+       }
     }
 
     public ShooterSolution getBestShootingSolution(double distanceCm, double targetHeightCm) {

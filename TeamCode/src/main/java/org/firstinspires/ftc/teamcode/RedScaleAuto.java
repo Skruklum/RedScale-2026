@@ -39,6 +39,9 @@ public class RedScaleAuto extends LinearOpMode {
         return isBlue ? -value : value;
     }
 
+    private Intake intake;
+    private Shooter shooter;
+    private Stopper stopper;
 
     @Override
     public void runOpMode() {
@@ -46,14 +49,9 @@ public class RedScaleAuto extends LinearOpMode {
         robotPoseController = new RobotPoseController(hardwareMap);
         shooterRotatorController = new ShooterRotatorController(hardwareMap, robotPoseController, "shooterRot");
 
-
-        // Initialize your MecanumDrive (this contains your 2-dead wheel localizer)
-        // Make sure the starting Pose matches your MeepMeep code exactly
-        Pose2d initialPose = reflect(-60, 35, Math.toRadians(90));
-        drive = new MecanumDrive(hardwareMap, initialPose);
-        Intake intake = new Intake(hardwareMap);
-        Shooter shooter = new Shooter(hardwareMap);
-        Stopper stopper = new Stopper(hardwareMap);
+        intake = new Intake(hardwareMap);
+        shooter = new Shooter(hardwareMap);
+        stopper = new Stopper(hardwareMap);
 
         while (true) {
             if (gamepad1.crossWasPressed()) {
@@ -71,7 +69,10 @@ public class RedScaleAuto extends LinearOpMode {
             }
         }
 
-        waitForStart();
+        // Initialize your MecanumDrive (this contains your 2-dead wheel localizer)
+        // Make sure the starting Pose matches your MeepMeep code exactly
+        Pose2d initialPose = reflect(-60, 35, Math.toRadians(90));
+        drive = new MecanumDrive(hardwareMap, initialPose);
 
         TrajectoryActionBuilder trajectoryActionBuilder = drive.actionBuilder(initialPose)
                 .afterTime(0, () -> {shooterRotatorController.setTargetWorldAngle(reflect(55));})
@@ -83,23 +84,31 @@ public class RedScaleAuto extends LinearOpMode {
                 .waitSeconds(2)
                 .stopAndAdd(stopper.timedPower(-1.0))
 
-                .splineToConstantHeading(reflectV(-1.5, 25), reflect(Math.toRadians(90.00)))
-                .splineToConstantHeading(reflectV(-1.5, 62.5), reflect(Math.toRadians(90.00)), new TranslationalVelConstraint(20))
-                .strafeTo(reflectV(-27.5, 36.5))
+
+                // Part 1
+                .splineToConstantHeading(reflectV(-9.5, 25), reflect(Math.toRadians(90.00)))
+                .splineToConstantHeading(reflectV(-9.5, 62.5), reflect(Math.toRadians(90.00)), new TranslationalVelConstraint(20))
+                .strafeTo(reflectV(-27.5, 30))
 
                 .stopAndAdd(stopper.timedPower(1.0))
                 .waitSeconds(2)
                 .stopAndAdd(stopper.timedPower(-1.0))
+                //
 
-                .splineToConstantHeading(reflectV(26, 25), reflect(Math.toRadians(90.00)))
-                .splineToConstantHeading(reflectV(26, 76.5), reflect(Math.toRadians(90.00)), new TranslationalVelConstraint(30))
-                .strafeTo(reflectV(26, 60))
-                .strafeTo(reflectV(-26, 39.5))
+
+                // Part 2
+                .splineToConstantHeading(reflectV(16.7, 25), reflect(Math.toRadians(90.00)))
+                .splineToConstantHeading(reflectV(16.7, 76.5), reflect(Math.toRadians(90.00)), new TranslationalVelConstraint(25))
+                .strafeTo(reflectV(16.7, 60))
+                .strafeTo(reflectV(-24, 39.5))
 
                 .stopAndAdd(stopper.timedPower(1.0))
                 .afterTime(0, intake.setPower(1))
                 .waitSeconds(2)
                 .stopAndAdd(stopper.timedPower(-1.0));
+                //
+
+        waitForStart();
 
         if (isStopRequested()) return;
 
@@ -138,6 +147,8 @@ public class RedScaleAuto extends LinearOpMode {
             Drawing.drawRobot(packet.fieldOverlay(), pose);
             FtcDashboard.getInstance().sendTelemetryPacket(packet);
 
+            telemetry.addData("Shooter Current Velocity", shooter.getVelocity());
+            telemetry.update();
 
 //            extendo.runAuto();
 //            lifter.runAuto();
