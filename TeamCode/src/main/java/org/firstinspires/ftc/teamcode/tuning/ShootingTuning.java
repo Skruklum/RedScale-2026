@@ -26,7 +26,7 @@ public class ShootingTuning extends OpMode {
     private boolean isAClicked = false;
     private boolean isSquareClicked = false;
 
-    private final int[] setpoints = {0, 100, 500, 2100};
+    private final int[] setpoints = {0, 100, 500, 1000, 2000, 1500, 1000, 500, 250};
 
     private final double[] stepSizes = {0.0001, 0.001, 0.01, 0.1, 1, 10};
     private int stepIndex = -1;

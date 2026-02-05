@@ -18,7 +18,7 @@ import java.lang.reflect.Array;
 
 
 @Config
-@TeleOp(group = "Shooting Tuning Custom PID", name = "Shooting Tuning")
+@TeleOp(group = "Tuning", name = "Shooting Tuning Custom PID")
 public class ShootingTuningCustomPID extends OpMode {
     private DcMotorEx Motor;
 
@@ -28,7 +28,7 @@ public class ShootingTuningCustomPID extends OpMode {
     private boolean isAClicked = false;
     private boolean isSquareClicked = false;
 
-    private final int[] setpoints = {0, 100, 500, 2100};
+    private final int[] setpoints = {0, 100, 500, 1000, 2000, 1500, 1000, 500, 250};
 
     private final double[] stepSizes = {0.0001, 0.001, 0.01, 0.1, 1, 10};
     private int stepIndex = -1;
@@ -40,12 +40,17 @@ public class ShootingTuningCustomPID extends OpMode {
     private double lowVelocity = 500;
 
 
-    public static double P = 60;
-    public static double F = 17.5;
+    public static double P = 0;
+    public static double F = 0.00017;
 
 
-    public static PIDCoefficients coeffs = new PIDCoefficients(P,0,0);
-    public static PIDFController pidfController = new PIDFController(coeffs, (x, v) -> F);
+    public static PIDCoefficients coeffs = new PIDCoefficients(P, 0, 0.003, 0.0003, 0, 0.001);
+    public static PIDFController pidfController = new PIDFController(coeffs, (d, v) -> {
+        if (v != null) {
+            return v*F;
+        }
+        return 0;
+    });
 
     private Telemetry dashboardTelemetry;
 
@@ -61,6 +66,7 @@ public class ShootingTuningCustomPID extends OpMode {
 
         Motor.setDirection(DcMotor.Direction.REVERSE);
         Motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        pidfController.setOutputBounds(-1, 1);
 
         FtcDashboard dashboard = FtcDashboard.getInstance();
         dashboardTelemetry =  dashboard.getTelemetry();
@@ -129,13 +135,18 @@ public class ShootingTuningCustomPID extends OpMode {
             P -= stepSizes[stepIndex];
         }
 
-        coeffs = new PIDCoefficients(P,0,0);
-        pidfController = new PIDFController(coeffs, (x, v) -> F);
+
         pidfController.targetVelocity = currentSetpoint;
 
         double power = pidfController.update(System.nanoTime(), 0, Motor.getVelocity());
 
         Motor.setPower(power);
+
+        if (gamepad1.right_bumper)  {
+            Motor.setPower(1);
+        }else if (!gamepad1.right_bumper && power == 0){
+            Motor.setPower(0);
+        }
 
         double SHOOTER_RPM = Motor.getVelocity() / SHOOTER_MOTOR_COUNTS_PER_REV * 60;
         double error = currentSetpoint - Motor.getVelocity();
@@ -143,10 +154,12 @@ public class ShootingTuningCustomPID extends OpMode {
 
         dashboardTelemetry.addData("error",error );
 
-        dashboardTelemetry.addData("TARGET VELOCITY",currentSetpoint );
+        dashboardTelemetry.addData("TARGET VELOCITY",pidfController.targetVelocity );
         dashboardTelemetry.addData("CURRENT VELOCITY",Motor.getVelocity() );
+        dashboardTelemetry.addData("SHOOTER POWER NEEDD",power );
 
         dashboardTelemetry.addData("SHOOTER_RPM",SHOOTER_RPM );
+        dashboardTelemetry.addData("kV",pidfController.getKV() );
 
 
         dashboardTelemetry.update();

@@ -102,7 +102,7 @@ public class aprilTagTrackingAim extends OpMode {
     private double robotPoseY = 0;
     private double robotPoseYaw = 0;
 
-    private Pose2d RedAlliance_AprilTag_Position = new Pose2d(58.14,58.14,Math.toRadians(-40));
+    private Pose2d RedAlliance_AprilTag_Position = new Pose2d(-58.14,58.14,Math.toRadians(-40));
     private Pose2d BlueAlliance_AprilTag_Position = new Pose2d(58.14,-58.14,Math.toRadians(40));
 
     enum AimState {
@@ -123,7 +123,7 @@ public class aprilTagTrackingAim extends OpMode {
 
 
     private double yawOffset = 0;
-    private double targetWorldAngle = 110; // The "World Heading" we want to face
+    private double targetWorldAngle = 0; // The "World Heading" we want to face
     private double smoothedBearingError = 0;
 
     private double absAngleTargetAprilTag = 0;
@@ -287,6 +287,8 @@ public class aprilTagTrackingAim extends OpMode {
                 if (Math.abs(smoothedBearingError) > 0.5) aimState = AimState.SNAP_TO_BEARING;
 
                 turretPID = new PIDFController(pidGyro);
+                turretPID.setOutputBounds(-1.0, 1.0);
+
                 usingVisionGains = false;
 
 //                double robotPoseX = mecanumDrive.localizer.getPose().position.x;
@@ -326,6 +328,8 @@ public class aprilTagTrackingAim extends OpMode {
                 if (smoothedBearingError > 0.5) aimState = AimState.SNAP_TO_BEARING;
 
                 turretPID = new PIDFController(pidGyro);
+                turretPID.setOutputBounds(-1.0, 1.0);
+
                 usingVisionGains = false;
             }
 
@@ -334,13 +338,16 @@ public class aprilTagTrackingAim extends OpMode {
                 double robotPoseX = mecanumDrive.localizer.getPose().position.x;
                 double robotPoseY = mecanumDrive.localizer.getPose().position.y;
 
-                double turreTarget = calculateTurretTarget(robotPoseX, robotPoseY, robotYaw, tagPositionX, tagPositionY);
+                double turretTarget = calculateTurretTarget(robotPoseX, robotPoseY, robotYaw, tagPositionX, tagPositionY);
 
                 telemetry.addLine("\n--- FIELD ORIENTED LOCK ---");
-                telemetry.addData("turret angle target (field oriented)", turreTarget);
+                telemetry.addData("turret angle target (field oriented)", turretTarget);
 
-                targetWorldAngle = turreTarget;
+                targetWorldAngle = turretTarget;
             }
+
+            telemetry.addData("targetWorldAngle", targetWorldAngle);
+            telemetry.addData("robotYaw !!!", robotYaw);
 
             // Calculate the angle the turret needs to be at relative to the robot body
             // Target (World) - Robot (World) = Target (Local)
@@ -397,8 +404,8 @@ public class aprilTagTrackingAim extends OpMode {
 
 
         telemetry.addLine("\n--- APRIL TAG ---");
-        telemetry.addData("aprilTagX", aprilTagX);
-        telemetry.addData("aprilTagY", aprilTagY);
+        telemetry.addData("aprilTagX", tagPositionX);
+        telemetry.addData("aprilTagY", tagPositionY);
 
         telemetry.addData("robotPoseX", robotPoseX);
         telemetry.addData("robotPoseY", robotPoseY);

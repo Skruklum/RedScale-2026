@@ -27,6 +27,9 @@ public class shooterTests extends OpMode {
 
         shooterMotor = hardwareMap.get(DcMotorEx.class, "shooter");
 
+        shooterMotor.setDirection(DcMotor.Direction.REVERSE);
+        shooterMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
         telemetry.addLine("Finish Initializing Camera..");
         telemetry.update();
 

@@ -48,6 +48,25 @@ public class PIDFController {
      * term for other plants.
      *
      * @param pid traditional PID coefficients
+     * @param kF custom feedforward that depends on position and velocity
+     */
+    public PIDFController(
+            PIDCoefficients pid,
+            FeedforwardFun kF
+    ) {
+        this.pid = pid;
+        this.kV = pid.kV;
+        this.kA = pid.kA;
+        this.kStatic = pid.kStatic;
+        this.kF = kF;
+    }
+
+    /**
+     * Feedforward parameters {@code kV}, {@code kA}, and {@code kStatic} correspond with a basic
+     * kinematic model of DC motors. The general function {@code kF} computes a custom feedforward
+     * term for other plants.
+     *
+     * @param pid traditional PID coefficients
      * @param kV feedforward velocity gain
      * @param kA feedforward acceleration gain
      * @param kStatic additive feedforward constant
@@ -76,12 +95,6 @@ public class PIDFController {
         this(pid, kV, kA, kStatic, (x, v) -> 0);
     }
 
-    public PIDFController(
-            PIDCoefficients pid,
-            FeedforwardFun kF
-    ) {
-        this(pid, 0, 0, 0, kF);
-    }
 
     public PIDFController(
             PIDCoefficients pid
@@ -165,7 +178,7 @@ public class PIDFController {
         }
 
         double baseOutput = pid.kP * error + pid.kI * errorSum + pid.kD * velError +
-                kV * targetVelocity + kA * targetAcceleration +
+                pid.kV * targetVelocity + pid.kA * targetAcceleration +
                 kF.compute(measuredPosition, measuredVelocity);
 
         double output = 0;
@@ -192,6 +205,11 @@ public class PIDFController {
     ) {
         return update(System.nanoTime(), measuredPosition, null);
     }
+
+    public double getKV() {
+        return this.pid.kV;
+    }
+
 
     /**
      * Reset the controller's integral sum.
