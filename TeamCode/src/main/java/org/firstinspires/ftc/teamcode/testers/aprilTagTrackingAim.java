@@ -141,7 +141,7 @@ public class aprilTagTrackingAim extends OpMode {
         // Hardware Mapping
         turretMotor = hardwareMap.get(DcMotorEx.class, "shooterRot");
 
-        Pose2d initialPose = new Pose2d(70, 0, Math.toRadians(180));
+        Pose2d initialPose = new Pose2d(62, 0, Math.toRadians(0));
         mecanumDrive = new MecanumDrive(hardwareMap, initialPose);
 
         // Turret Configuration
