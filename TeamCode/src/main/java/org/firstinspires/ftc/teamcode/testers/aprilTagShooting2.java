@@ -10,6 +10,7 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.IMU;
@@ -57,9 +58,9 @@ public class aprilTagShooting2 extends OpMode {
     private static final double MAX_TURRET_ANGLE_NEGATIVE = -150;
     private static final double TICKS_PER_DEGREE = 2.838;
 
-    public static int RED_GOAL_TAG_ID = 20;
-    public static int BLUE_GOAL_TAG_ID = 24;
-    private int activeGoalTagId = RED_GOAL_TAG_ID;
+    public static int RED_GOAL_TAG_ID = 24;
+    public static int BLUE_GOAL_TAG_ID = 20;
+    private int activeGoalTagId = BLUE_GOAL_TAG_ID;
     private boolean isRedAlliance = true;
 
     private DcMotorEx turretMotor, shooterMotor;
@@ -73,7 +74,7 @@ public class aprilTagShooting2 extends OpMode {
     private final CameraStreamProcessor streamProcessor = new CameraStreamProcessor();
 
     private double targetWorldAngle = 0;
-    private boolean isAutoAim = false;
+    private boolean isAutoAim = true;
     private boolean isAtLimit = false;
     private double yawOffset = 0;
 
@@ -89,6 +90,7 @@ public class aprilTagShooting2 extends OpMode {
     private double smoothedBearing = 0;
 
     private DcMotorEx frontLeft, frontRight, backLeft, backRight;
+    private CRServo stopperS;
 
     private double AprilTagDistance = 0;
     private double AprilTagDataA = 0;
@@ -105,6 +107,8 @@ public class aprilTagShooting2 extends OpMode {
 
         shooterMotor = hardwareMap.get(DcMotorEx.class, "shooter");
         shooterAd = hardwareMap.get(Servo.class, "shooterAd");
+        stopperS = hardwareMap.get(CRServo.class, "stopper");
+
 
         turretMotor = hardwareMap.get(DcMotorEx.class, "shooterRot");
 
@@ -154,6 +158,8 @@ public class aprilTagShooting2 extends OpMode {
     @Override
     public void loop() {
 
+
+
         // ===== DRIVE =====
         double y = -gamepad1.left_stick_y;
         double x = -gamepad1.left_stick_x;
@@ -169,6 +175,11 @@ public class aprilTagShooting2 extends OpMode {
         if (gamepad1.right_bumper) intakeMotor.setPower(1);
         else if (gamepad1.left_bumper) intakeMotor.setPower(-1);
         else intakeMotor.setPower(0);
+
+        // ===== STOPPER =====
+        if (gamepad2.dpad_right) stopperS.setPower(1);
+        else if (gamepad2.dpad_left) stopperS.setPower(-1);
+        else stopperS.setPower(0);
 
         // --- Alliance Toggle ---
         boolean currentDpadDown = gamepad1.dpad_down;
@@ -251,9 +262,8 @@ public class aprilTagShooting2 extends OpMode {
                     shooterMotor.getVelocity() / SHOOTER_MOTOR_COUNTS_PER_REV * 60;
 
             telemetry.addData("SHOOTER VELOCITY", shooterMotor.getVelocity());
-            telemetry.addData("SHOOTER TARGET", shooterSolution.targetRPM);
-
-            telemetry.addData("SHOOTER RPM", SHOOTER_RPM);
+            telemetry.addData("SHOOTER TARGET RPM", shooterSolution.targetRPM);
+            telemetry.addData("SHOOTER CURRENT RPM", SHOOTER_RPM);
         }
 
         telemetry.addData("ALLIANCE", isRedAlliance ? "RED" : "BLUE");
