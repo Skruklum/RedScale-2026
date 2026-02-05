@@ -53,8 +53,6 @@ public class ShootingTuningCustomPID extends OpMode {
     public void init() {
         Motor = hardwareMap.get(DcMotorEx.class, "shooter");
 
-
-
         telemetry.addData("power",0);
         telemetry.addData("error",0);
 
