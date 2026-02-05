@@ -114,7 +114,7 @@ public class aprilTagTrackingAim extends OpMode {
 
     /* ================== STATE VARIABLES ================== */
     private PIDFController turretPID = new PIDFController(pidGyro);
-    private boolean usingVisionGains = false;
+    private boolean usingVisionGains = true;
 
     private boolean isAutoAim = true;
     private boolean lastSquare = false;
@@ -282,7 +282,7 @@ public class aprilTagTrackingAim extends OpMode {
 //            }
 
             // If we lost the tag, switch back to Gyro gains for a stiff hold
-            if (fieldOrientedLock && !tagVisible) {
+            if (fieldOrientedLock && !tagVisible && usingVisionGains) {
                 telemetry.addLine("FIELD ORIENTEDDD !!!!" );
                 if (Math.abs(smoothedBearingError) > 0.5) aimState = AimState.SNAP_TO_BEARING;
 
@@ -333,7 +333,7 @@ public class aprilTagTrackingAim extends OpMode {
                 usingVisionGains = false;
             }
 
-            if (fieldOrientedLock && usingVisionGains == false) {
+            if (fieldOrientedLock && !usingVisionGains) {
 
                 double robotPoseX = mecanumDrive.localizer.getPose().position.x;
                 double robotPoseY = mecanumDrive.localizer.getPose().position.y;
