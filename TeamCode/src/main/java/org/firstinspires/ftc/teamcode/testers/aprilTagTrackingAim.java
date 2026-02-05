@@ -55,7 +55,7 @@ public class aprilTagTrackingAim extends OpMode {
 
     /* ================== PID ================== */
     // PID for when we see the tag (needs to be responsive)
-    public static PIDCoefficients pidVision = new PIDCoefficients(0.01, 0, 0.001);
+    public static PIDCoefficients pidVision = new PIDCoefficients(0.015, 0, 0.7);
     // PID for holding position when tag is lost (needs to be stiff)
     public static PIDCoefficients pidGyro   = new PIDCoefficients(0.035, 0, 0.002);
 
@@ -119,7 +119,7 @@ public class aprilTagTrackingAim extends OpMode {
     private boolean isAutoAim = true;
     private boolean lastSquare = false;
     private boolean isAtLimit = false;
-    private boolean fieldOrientedLock = false;
+    private boolean fieldOrientedLock = true;
 
 
     private double yawOffset = 0;
@@ -282,7 +282,7 @@ public class aprilTagTrackingAim extends OpMode {
 //            }
 
             // If we lost the tag, switch back to Gyro gains for a stiff hold
-            if (fieldOrientedLock && !tagVisible && usingVisionGains) {
+            if (fieldOrientedLock && !tagVisible) {
                 telemetry.addLine("FIELD ORIENTEDDD !!!!" );
                 if (Math.abs(smoothedBearingError) > 0.5) aimState = AimState.SNAP_TO_BEARING;
 
@@ -344,7 +344,7 @@ public class aprilTagTrackingAim extends OpMode {
 
             // Calculate the angle the turret needs to be at relative to the robot body
             // Target (World) - Robot (World) = Target (Local)
-            double errorDeg = normalizeAngle( - robotYaw);
+            double errorDeg = normalizeAngle( targetWorldAngle - robotYaw);
             telemetry.addData("errorDeg", errorDeg);
 
             // Safety Clip
