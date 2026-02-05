@@ -360,7 +360,7 @@ public class aprilTagLocalization extends OpMode {
     }
 
     private void initVision() {
-        Position cameraPosition = new Position(DistanceUnit.CM, cmToInch(-21.5), mmToInch(39.11),cmToInch(41), 0);
+        Position cameraPosition = new Position(DistanceUnit.INCH, cmToInch(-21.5), mmToInch(39.11),cmToInch(41), 0);
         YawPitchRollAngles cameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES,0, 0, 0,0);
         aprilTag = new AprilTagProcessor.Builder().setCameraPose(cameraPosition, cameraOrientation).setDrawTagOutline(true).setDrawTagID(true).build();
         aprilTag.setDecimation(DECIMATION_SEARCH);

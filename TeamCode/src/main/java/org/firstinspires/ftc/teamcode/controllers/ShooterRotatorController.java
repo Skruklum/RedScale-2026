@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.controllers;
 
+import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -32,6 +33,10 @@ public class ShooterRotatorController {
     public static PIDCoefficients coeffs = new PIDCoefficients(0.03, 0, 0.001);
     PIDFController pidController = new PIDFController(coeffs);
 
+    private Pose2d RedAlliance_AprilTag_Position = new Pose2d(58.14,58.14,Math.toRadians(-40));
+    private Pose2d BlueAlliance_AprilTag_Position = new Pose2d(58.14,-58.14,Math.toRadians(40));
+    private boolean isBlue = false;
+
     public ShooterRotatorController(HardwareMap hardwareMap, RobotPoseController robotPoseController, String shooterRotName) {
         turretMotor = hardwareMap.get(DcMotorEx.class, shooterRotName);
         turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -60,6 +65,21 @@ public class ShooterRotatorController {
     public double getTurretWorldAngle() {
         return turretWorldAngle;
     }
+
+    public void activateAprilTagFieldOrientation(double robotPoseX, double robotPoseY, double robotYaw) {
+        double tagPositionX = 0;
+        double tagPositionY = 0;
+        if (isBlue) {
+            tagPositionX = BlueAlliance_AprilTag_Position.position.x;
+            tagPositionY = BlueAlliance_AprilTag_Position.position.y;
+
+        }else {
+            tagPositionX = RedAlliance_AprilTag_Position.position.x;
+            tagPositionY = RedAlliance_AprilTag_Position.position.y;
+        }
+        targetWorldAngle = calculateTurretTarget(robotPoseX, robotPoseY, robotYaw, tagPositionX, tagPositionY);
+    }
+
 
     public void activate() {
         // Step A: Calculate 'Ideal' Angle relative to Robot
@@ -115,6 +135,30 @@ public class ShooterRotatorController {
         while (angle > 180) angle -= 360;
         while (angle <= -180) angle += 360;
         return angle;
+    }
+
+    /**
+     * Calculates the local turret angle required to point at a field coordinate.
+     *
+     * @param robotX Current field X of the robot
+     * @param robotY Current field Y of the robot
+     * @param robotHeading Current world heading of the robot (-180 to 180)
+     * @param targetX Field X of the AprilTag
+     * @param targetY Field Y of the AprilTag
+     * @return The target angle for the turret relative to the robot body
+     */
+    public double calculateTurretTarget(double robotX, double robotY, double robotHeading, double targetX, double targetY) {
+        // 1. Get the vector from robot to target
+        double deltaX = targetX - robotX;
+        double deltaY = targetY - robotY;
+
+
+
+//        // 3. Calculate target relative to robot heading
+//        double localTarget = worldAngle - robotHeading;
+
+        // 4. Normalize to -180 to 180 for shortest path rotation
+        return Math.toDegrees(Math.atan2(deltaY, deltaX));
     }
 
 }

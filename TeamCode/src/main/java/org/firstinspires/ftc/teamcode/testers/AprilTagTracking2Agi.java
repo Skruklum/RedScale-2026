@@ -172,6 +172,7 @@ public class AprilTagTracking2Agi extends OpMode {
             List<AprilTagDetection> detections = aprilTag.getDetections();
 
             for (AprilTagDetection d : detections) {
+                telemetry.addData("DETECTED ID", d.metadata.id);
                 if (d.metadata != null && d.id == RED_GOAL_TAG_ID) {
                     tagVisible = true;
 

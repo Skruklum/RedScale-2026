@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
 public class Shooter {
     private DcMotorEx shooterMotor;
@@ -17,12 +18,21 @@ public class Shooter {
     // (3000 / 60) * 28 = 1400 ticks/sec
     private static final double TARGET_VELO = (TARGET_RPM / 60.0) * TICKS_PER_REV;
 
+    // ---------------- SHOOTER PIDF ----------------
+
+    public static double PID_P = 20.0;
+    public static double PID_I = 0.0;
+    public static double PID_D = 0.0;
+    public static double PID_F = 14.5;
+    PIDFCoefficients ShooterPIDF = new PIDFCoefficients(PID_P, PID_I, PID_D, PID_F);
+
     public Shooter(HardwareMap hardwareMap) {
         shooterMotor = hardwareMap.get(DcMotorEx.class, "shooter");
         shooterMotor.setDirection(DcMotor.Direction.REVERSE);
 
         // Essential for setVelocity() to work
-        shooterMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        shooterMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, ShooterPIDF);
+
 
         // Use FLOAT for shooters to prevent mechanical shock when stopping
         shooterMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.FLOAT);
