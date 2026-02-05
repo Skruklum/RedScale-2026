@@ -1,14 +1,50 @@
 package org.firstinspires.ftc.teamcode.TeleOp;
 
-import android.graphics.Bitmap; import android.graphics.Canvas; import android.util.Size;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.util.Size;
 
-import com.acmerobotics.dashboard.FtcDashboard; import com.acmerobotics.dashboard.config.Config; import com.acmerobotics.dashboard.telemetry.MultipleTelemetry; import com.qualcomm.hardware.rev.RevHubOrientationOnRobot; import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode; import com.qualcomm.robotcore.eventloop.opmode.TeleOp; import com.qualcomm.robotcore.hardware.CRServo; import com.qualcomm.robotcore.hardware.DcMotor; import com.qualcomm.robotcore.hardware.DcMotorEx; import com.qualcomm.robotcore.hardware.IMU; import com.qualcomm.robotcore.hardware.PIDFCoefficients; import com.qualcomm.robotcore.hardware.Servo; import com.qualcomm.robotcore.util.Range;
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.robotcore.external.function.Consumer; import org.firstinspires.ftc.robotcore.external.function.Continuation; import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName; import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl; import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.GainControl; import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit; import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit; import org.firstinspires.ftc.robotcore.external.navigation.Position; import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles; import org.firstinspires.ftc.robotcore.external.stream.CameraStreamSource; import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibration; import org.firstinspires.ftc.teamcode.controllers.PIDCoefficients; import org.firstinspires.ftc.teamcode.controllers.PIDFController; import org.firstinspires.ftc.vision.VisionPortal; import org.firstinspires.ftc.vision.VisionProcessor; import org.firstinspires.ftc.vision.apriltag.AprilTagDetection; import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor; import org.opencv.android.Utils; import org.opencv.core.Mat;
+import org.firstinspires.ftc.robotcore.external.function.Consumer;
+import org.firstinspires.ftc.robotcore.external.function.Continuation;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.GainControl;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
+import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.robotcore.external.stream.CameraStreamSource;
+import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibration;
+import org.firstinspires.ftc.teamcode.controllers.PIDCoefficients;
+import org.firstinspires.ftc.teamcode.controllers.PIDFController;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.VisionProcessor;
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+import org.opencv.android.Utils;
+import org.opencv.core.Mat;
 
-import java.util.List; import java.util.concurrent.TimeUnit; import java.util.concurrent.atomic.AtomicReference;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
-@Config @TeleOp(name = "RsudAngleFix_Merged_RedAlliance", group = "TeleOp") public class RsudAngleFixIniYangBenerCoHold2 extends LinearOpMode {
+
+@Config
+@TeleOp(name = "RsudAngleFix_Merged_RedAlliance", group = "TeleOp") public class RsudAngleFixIniYangBenerCoHold2 extends LinearOpMode {
 
 // =========================================================================
 //                            FILE 1 VARIABLES
@@ -25,13 +61,13 @@ import java.util.List; import java.util.concurrent.TimeUnit; import java.util.co
     private IMU imu;
 
     // ---------------- CONSTANTS ----------------
-// HD Hex (No Gearbox) = 28 ticks per rev
+    // HD Hex (No Gearbox) = 28 ticks per rev
     static final double HD_HEX_TICKS_PER_REV = 28.0;
     static final double TURRET_GEAR_RATIO = 4.75;
     static final double CORE_HEX_TICKS_PER_REV = 288.0 * TURRET_GEAR_RATIO;
 
-    // Shooter Constants
-    static final double TARGET_RPM = 3000.0;
+    // Shooter Constants (UPDATED TO MATCH SHOOTER CLASS)
+    static final double TARGET_RPM = 2950.0;
     static final double SHOOTER_TICKS_PER_SEC = (TARGET_RPM / 60.0) * HD_HEX_TICKS_PER_REV;
 
     // Turret Constants
@@ -44,10 +80,11 @@ import java.util.List; import java.util.concurrent.TimeUnit; import java.util.co
     boolean lastTrigger = false;
     boolean hasRumbled = false;
 
-    public static double PID_P = 20.0;
+    // (UPDATED PIDS TO MATCH SHOOTER CLASS)
+    public static double PID_P = 60.0;
     public static double PID_I = 0.0;
     public static double PID_D = 0.0;
-    public static double PID_F = 14.5;
+    public static double PID_F = 17.5;
     PIDFCoefficients ShooterPIDF = new PIDFCoefficients(PID_P, PID_I, PID_D, PID_F);
 
 // =========================================================================
@@ -55,7 +92,7 @@ import java.util.List; import java.util.concurrent.TimeUnit; import java.util.co
 // =========================================================================
 
     /* ================== PID ================== */
-// PID for when we see the tag (needs to be responsive)
+    // PID for when we see the tag (needs to be responsive)
     public static PIDCoefficients pidVision = new PIDCoefficients(0.01, 0, 0.001);
     // PID for holding position when tag is lost (needs to be stiff)
     public static PIDCoefficients pidGyro   = new PIDCoefficients(0.035, 0, 0.002);
@@ -146,6 +183,9 @@ import java.util.List; import java.util.concurrent.TimeUnit; import java.util.co
         // IMPORTANT: Shooter must be in RUN_USING_ENCODER for RPM limiting to work
         shooter.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, ShooterPIDF);
 
+        // (UPDATED LOGIC: ADDED FLOAT BEHAVIOR FROM SHOOTER CLASS)
+        shooter.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.FLOAT);
+
         // ---------------- VISION INIT (FILE 2) ----------------
         initVision();
 
@@ -170,7 +210,7 @@ import java.util.List; import java.util.concurrent.TimeUnit; import java.util.co
             else if (gamepad1.left_bumper) intake.setPower(-1);
             else intake.setPower(0);
 
-            // ===== SHOOTER TOGGLE (3000 RPM LIMIT) =====
+            // ===== SHOOTER TOGGLE (UPDATED 2950 RPM LIMIT) =====
             boolean trigger = gamepad2.right_trigger > 0.2;
             if (trigger && !lastTrigger) {
                 shooterOn = !shooterOn;
@@ -219,10 +259,13 @@ import java.util.List; import java.util.concurrent.TimeUnit; import java.util.co
                 manualTurretPower = -gamepad2.right_stick_x * 0.6;
             }
 
-            // If manual input is detected, disable auto-aim to give priority to the driver
-            if (manualTurretPower != 0) {
-                isAutoAim = false;
-            }
+            // MODIFICATION START: Removed the force disable.
+            // If manual input is detected, we don't disable auto-aim permanently.
+            // We just override it in the logic below.
+            // if (manualTurretPower != 0) {
+            //    isAutoAim = false;
+            // }
+            // MODIFICATION END
 
             /* ================== AUTO AIM TOGGLE ================== */
             if (gamepad2.square && !lastSquare) {
@@ -248,7 +291,9 @@ import java.util.List; import java.util.concurrent.TimeUnit; import java.util.co
             double rawBearing = 0;
             double bearingError = 0;
 
-            if (isAutoAim) {
+            // MODIFICATION START: Added check for (manualTurretPower == 0)
+            // Auto aim only runs if enabled AND driver is NOT touching the controls.
+            if (isAutoAim && manualTurretPower == 0) {
                 List<AprilTagDetection> detections = aprilTag.getDetections();
 
                 // Loop through detections to find our specific Tag ID
@@ -314,7 +359,7 @@ import java.util.List; import java.util.concurrent.TimeUnit; import java.util.co
                 turretMotor.setPower(Range.clip(power, -1.0, 1.0));
             }
             else {
-                // Manual Control
+                // Manual Control (Runs if Manual Power != 0 OR isAutoAim is False)
                 // (manualTurretPower was calculated at the start of the vision logic)
 
                 // Soft Limits (File 1 Logic primarily for manual safety)
