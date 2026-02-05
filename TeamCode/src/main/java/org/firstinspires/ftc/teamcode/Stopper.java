@@ -27,7 +27,7 @@ public class Stopper {
 
                 long elapsedTime = System.currentTimeMillis() - startTime;
 
-                if (elapsedTime < 1500) {
+                if (elapsedTime < 1250) {
                     stopperServo.setPower(power);
                     packet.put("Stopper Status", power > 0 ? "Forward" : "Reverse");
                     packet.put("Stopper Time Left", (1500 - elapsedTime) / 1000.0);

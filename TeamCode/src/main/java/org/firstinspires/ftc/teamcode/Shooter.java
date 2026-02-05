@@ -20,10 +20,10 @@ public class Shooter {
 
     // ---------------- SHOOTER PIDF ----------------
 
-    public static double PID_P = 60; // prev 20
+    public static double PID_P = 20; // prev 20/60
     public static double PID_I = 0.0;
     public static double PID_D = 0.0;
-    public static double PID_F = 17.5; // prev 14.5
+    public static double PID_F = 14.5; // prev 14.5/17.5
     PIDFCoefficients ShooterPIDF = new PIDFCoefficients(PID_P, PID_I, PID_D, PID_F);
 
     public Shooter(HardwareMap hardwareMap) {

@@ -84,15 +84,15 @@ public class RedScaleAuto extends LinearOpMode {
                 .stopAndAdd(stopper.timedPower(-1.0))
 
                 .splineToConstantHeading(reflectV(-1.5, 25), reflect(Math.toRadians(90.00)))
-                .splineToConstantHeading(reflectV(-1.5, 62.5), reflect(Math.toRadians(90.00)))
+                .splineToConstantHeading(reflectV(-1.5, 62.5), reflect(Math.toRadians(90.00)), new TranslationalVelConstraint(20))
                 .strafeTo(reflectV(-27.5, 36.5))
 
                 .stopAndAdd(stopper.timedPower(1.0))
                 .waitSeconds(2)
                 .stopAndAdd(stopper.timedPower(-1.0))
 
-                .splineToConstantHeading(reflectV(23, 25), reflect(Math.toRadians(90.00)))
-                .splineToConstantHeading(reflectV(23, 68.5), reflect(Math.toRadians(90.00)))
+                .splineToConstantHeading(reflectV(26, 25), reflect(Math.toRadians(90.00)))
+                .splineToConstantHeading(reflectV(26, 76.5), reflect(Math.toRadians(90.00)), new TranslationalVelConstraint(30))
                 .strafeTo(reflectV(26, 60))
                 .strafeTo(reflectV(-26, 39.5))
 

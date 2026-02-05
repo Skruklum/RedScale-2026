@@ -22,17 +22,16 @@ public class MeepMeepTesting {
 
                 .splineToConstantHeading(new Vector2d(-20, 31.67), Math.toRadians(90))
                 .splineToConstantHeading(new Vector2d(-20, 55.28), Math.toRadians(90), new TranslationalVelConstraint(20))
-                .strafeTo(new Vector2d(-33, 27),
-                        new TranslationalVelConstraint(60))
+                .strafeTo(new Vector2d(-33, 27))
                 .waitSeconds(0.1)
 
                 .splineToConstantHeading(new Vector2d(2, 20), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(2, 55.28), Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(2, 55.28), Math.toRadians(90), new TranslationalVelConstraint(20))
                 .strafeTo(new Vector2d(-33, 27))
                 .waitSeconds(0.1)
 
                 .splineToConstantHeading(new Vector2d(28, 20), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(28, 55.28), Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(28, 55.28), Math.toRadians(90), new TranslationalVelConstraint(20))
                 .strafeTo(new Vector2d(-33, 27))
                 .waitSeconds(0.1)
 

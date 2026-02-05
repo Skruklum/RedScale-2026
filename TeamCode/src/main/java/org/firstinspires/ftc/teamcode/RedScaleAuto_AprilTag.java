@@ -154,6 +154,7 @@ public class RedScaleAuto_AprilTag extends LinearOpMode {
             FtcDashboard.getInstance().sendTelemetryPacket(packet);
 
 
+
 //            extendo.runAuto();
 //            lifter.runAuto();
 ////            lifter.sendTelemetryAuto(packet);
