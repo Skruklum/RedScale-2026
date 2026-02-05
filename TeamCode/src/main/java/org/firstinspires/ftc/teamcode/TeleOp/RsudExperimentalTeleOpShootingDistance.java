@@ -1,14 +1,50 @@
 package org.firstinspires.ftc.teamcode.TeleOp;
 
-import android.graphics.Bitmap; import android.graphics.Canvas; import android.util.Size;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.util.Size;
 
-import com.acmerobotics.dashboard.FtcDashboard; import com.acmerobotics.dashboard.config.Config; import com.acmerobotics.dashboard.telemetry.MultipleTelemetry; import com.qualcomm.hardware.rev.RevHubOrientationOnRobot; import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode; import com.qualcomm.robotcore.eventloop.opmode.TeleOp; import com.qualcomm.robotcore.hardware.CRServo; import com.qualcomm.robotcore.hardware.DcMotor; import com.qualcomm.robotcore.hardware.DcMotorEx; import com.qualcomm.robotcore.hardware.IMU; import com.qualcomm.robotcore.hardware.PIDFCoefficients; import com.qualcomm.robotcore.hardware.Servo; import com.qualcomm.robotcore.util.Range;
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.robotcore.external.function.Consumer; import org.firstinspires.ftc.robotcore.external.function.Continuation; import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName; import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl; import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.GainControl; import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit; import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit; import org.firstinspires.ftc.robotcore.external.navigation.Position; import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles; import org.firstinspires.ftc.robotcore.external.stream.CameraStreamSource; import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibration; import org.firstinspires.ftc.teamcode.controllers.PIDCoefficients; import org.firstinspires.ftc.teamcode.controllers.PIDFController; import org.firstinspires.ftc.vision.VisionPortal; import org.firstinspires.ftc.vision.VisionProcessor; import org.firstinspires.ftc.vision.apriltag.AprilTagDetection; import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor; import org.opencv.android.Utils; import org.opencv.core.Mat;
+import org.firstinspires.ftc.robotcore.external.function.Consumer;
+import org.firstinspires.ftc.robotcore.external.function.Continuation;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.GainControl;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
+import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.robotcore.external.stream.CameraStreamSource;
+import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibration;
+import org.firstinspires.ftc.teamcode.controllers.PIDCoefficients;
+import org.firstinspires.ftc.teamcode.controllers.PIDFController;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.VisionProcessor;
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+import org.opencv.android.Utils;
+import org.opencv.core.Mat;
 
-import java.util.List; import java.util.concurrent.TimeUnit; import java.util.concurrent.atomic.AtomicReference;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
-@Config @TeleOp(name = "RsudAngleFix_Merged_RedAlliance", group = "TeleOp") public class RsudAngleFixIniYangBenerCoHold2 extends LinearOpMode {
+@Config
+@TeleOp(name = "RsudExperimentalTeleop", group = "TeleOp")
+public class RsudExperimentalTeleOpShootingDistance extends LinearOpMode {
 
 // =========================================================================
 //                            FILE 1 VARIABLES
@@ -25,19 +61,29 @@ import java.util.List; import java.util.concurrent.TimeUnit; import java.util.co
     private IMU imu;
 
     // ---------------- CONSTANTS ----------------
-// HD Hex (No Gearbox) = 28 ticks per rev
-    static final double HD_HEX_TICKS_PER_REV = 28.0;
-    static final double TURRET_GEAR_RATIO = 4.75;
-    static final double CORE_HEX_TICKS_PER_REV = 288.0 * TURRET_GEAR_RATIO;
+    // HD Hex (No Gearbox) = 28 ticks per rev
+    static final double HD_HEX_BASE_TICKS = 28.0;
+
+    // === TURRET GEARING SETUP (UPDATED FOR HD HEX) ===
+    // CHANGE THIS if you have a gearbox (e.g., 20.0 for 20:1, 40.0 for 40:1)
+    static final double TURRET_INTERNAL_GEAR = 1.0;
+
+    // External gears (Sprockets/Gears on the turret itself)
+    static final double TURRET_EXTERNAL_GEAR = 4.75;
+
+    // Total Ticks Per Revolution of the Turret
+    static final double TURRET_TOTAL_TICKS = HD_HEX_BASE_TICKS * TURRET_INTERNAL_GEAR * TURRET_EXTERNAL_GEAR;
+
+    // Calculated Ticks Per Degree (Replaces the hardcoded value in File 2)
+    static final double TICKS_PER_DEGREE = TURRET_TOTAL_TICKS / 360.0;
 
     // Shooter Constants
-    static final double TARGET_RPM = 3000.0;
-    static final double SHOOTER_TICKS_PER_SEC = (TARGET_RPM / 60.0) * HD_HEX_TICKS_PER_REV;
+    public static double TARGET_RPM = 3000.0;
 
     // Turret Constants
     static final double TURRET_POWER = 0.6; // Speed for manual control
     static final double TURRET_LIMIT_DEG = 60.0;
-    static final int TURRET_LIMIT_TICKS = (int) ((TURRET_LIMIT_DEG / 360.0) * CORE_HEX_TICKS_PER_REV);
+    static final int TURRET_LIMIT_TICKS = (int) (TURRET_LIMIT_DEG * TICKS_PER_DEGREE);
 
     // ---------------- STATE ----------------
     boolean shooterOn = false;
@@ -55,7 +101,7 @@ import java.util.List; import java.util.concurrent.TimeUnit; import java.util.co
 // =========================================================================
 
     /* ================== PID ================== */
-// PID for when we see the tag (needs to be responsive)
+    // PID for when we see the tag (needs to be responsive)
     public static PIDCoefficients pidVision = new PIDCoefficients(0.01, 0, 0.001);
     // PID for holding position when tag is lost (needs to be stiff)
     public static PIDCoefficients pidGyro   = new PIDCoefficients(0.035, 0, 0.002);
@@ -63,7 +109,7 @@ import java.util.List; import java.util.concurrent.TimeUnit; import java.util.co
     /* ================== TURRET SETTINGS (FILE 2) ================== */
     private static final double MAX_TURRET_ANGLE_POSITIVE = 170;
     private static final double MAX_TURRET_ANGLE_NEGATIVE = -150;
-    private static final double TICKS_PER_DEGREE = 2.838; // Check this calibration!
+    // NOTE: Removed hardcoded TICKS_PER_DEGREE here; using the calculated one above!
 
     /* ================== VISION SETTINGS ================== */
     public static double BEARING_CENTER = 1.5; // Offset if camera isn't perfectly centered
@@ -170,7 +216,7 @@ import java.util.List; import java.util.concurrent.TimeUnit; import java.util.co
             else if (gamepad1.left_bumper) intake.setPower(-1);
             else intake.setPower(0);
 
-            // ===== SHOOTER TOGGLE (3000 RPM LIMIT) =====
+            // ===== SHOOTER TOGGLE (DYNAMIC RPM) =====
             boolean trigger = gamepad2.right_trigger > 0.2;
             if (trigger && !lastTrigger) {
                 shooterOn = !shooterOn;
@@ -179,7 +225,10 @@ import java.util.List; import java.util.concurrent.TimeUnit; import java.util.co
             lastTrigger = trigger;
 
             if (shooterOn) {
-                shooter.setVelocity(SHOOTER_TICKS_PER_SEC);
+                // Calculate ticks per sec dynamically using the current TARGET_RPM
+                // Note: Shooter uses HD_HEX_BASE_TICKS (28) directly as per your previous setup
+                double dynamicTicksPerSec = (TARGET_RPM / 60.0) * HD_HEX_BASE_TICKS;
+                shooter.setVelocity(dynamicTicksPerSec);
             } else {
                 shooter.setVelocity(0);
             }
@@ -256,6 +305,20 @@ import java.util.List; import java.util.concurrent.TimeUnit; import java.util.co
                     if (d.metadata != null && d.id == RED_GOAL_TAG_ID) {
                         tagVisible = true;
 
+                        // =================================================================
+                        //            SHOOTER RPM CALCULATION
+                        // =================================================================
+                        double distInch = d.ftcPose.range; // Distance in inches
+
+                        // TUNING FORMULA: BaseRPM + (Slope * Distance)
+                        // Example: At 25 inches, RPM = 2000 + (25 * 40) = 3000 RPM
+                        double calculatedRPM = 2000 + (distInch * 40.0);
+
+                        // Clamp RPM (0 to 4000)
+                        TARGET_RPM = Range.clip(calculatedRPM, 0, 4500);
+                        // =================================================================
+
+
                         // 1. RAW BEARING: The angle from Camera Center to Tag
                         // This uses atan2(x, z) internally.
                         rawBearing = d.ftcPose.bearing;
@@ -298,7 +361,7 @@ import java.util.List; import java.util.concurrent.TimeUnit; import java.util.co
                 turretPID.targetPosition = errorDeg * TICKS_PER_DEGREE;
                 double power = turretPID.update(turretTicks);
 
-                // Soft Limits (Prevent cable snapping) - Using File 2 Limits for AutoAim
+                // Soft Limits
                 if (turretDeg > MAX_TURRET_ANGLE_POSITIVE && power > 0) {
                     power = 0;
                     isAtLimit = true;
@@ -315,9 +378,8 @@ import java.util.List; import java.util.concurrent.TimeUnit; import java.util.co
             }
             else {
                 // Manual Control
-                // (manualTurretPower was calculated at the start of the vision logic)
 
-                // Soft Limits (File 1 Logic primarily for manual safety)
+                // Soft Limits (File 1 Logic)
                 int turretPos = turret.getCurrentPosition();
                 if (turretPos <= -TURRET_LIMIT_TICKS && manualTurretPower < 0) {
                     manualTurretPower = 0;
@@ -332,7 +394,7 @@ import java.util.List; import java.util.concurrent.TimeUnit; import java.util.co
 
 
             // ===== TELEMETRY & RUMBLE (FILE 1) =====
-            double currentRPM = (shooter.getVelocity() * 60.0) / HD_HEX_TICKS_PER_REV;
+            double currentRPM = (shooter.getVelocity() * 60.0) / HD_HEX_BASE_TICKS;
 
             // Rumble when we hit the target RPM (+/- 50 RPM)
             if (shooterOn && !hasRumbled && currentRPM >= (TARGET_RPM - 50)) {
@@ -343,7 +405,7 @@ import java.util.List; import java.util.concurrent.TimeUnit; import java.util.co
             telemetry.addData("Shooter", shooterOn ? "LIMITER ACTIVE" : "OFF");
             telemetry.addData("Target RPM", TARGET_RPM);
             telemetry.addData("Current RPM", "%.0f", currentRPM);
-            telemetry.addData("Turret Angle", "%.1f°", (turret.getCurrentPosition() / CORE_HEX_TICKS_PER_REV) * 360.0);
+            telemetry.addData("Turret Angle", "%.1f°", (turret.getCurrentPosition() / TICKS_PER_DEGREE));
 
             // ===== TELEMETRY (FILE 2) =====
             telemetry.addLine("\n--- TURRET MATH (AUTO) ---");
@@ -352,10 +414,6 @@ import java.util.List; import java.util.concurrent.TimeUnit; import java.util.co
             telemetry.addData("Robot Yaw (IMU)", "%.2f", robotYaw);
             telemetry.addData("Turret Pos (Deg Vision)", "%.2f", turretDeg);
             telemetry.addData("Target World Angle", "%.2f", targetWorldAngle);
-
-            telemetry.addLine("\n--- VISION DEBUG ---");
-            telemetry.addData("Bearing Error", "%.3f", bearingError);
-            telemetry.addData("Using Vision PID", usingVisionGains);
 
             telemetry.update();
         }
