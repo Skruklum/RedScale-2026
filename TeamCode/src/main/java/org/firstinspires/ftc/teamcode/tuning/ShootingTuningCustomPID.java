@@ -53,7 +53,7 @@ public class ShootingTuningCustomPID extends OpMode {
     public void init() {
         Motor = hardwareMap.get(DcMotorEx.class, "shooter");
 
-        PIDFController.FeedforwardFun F = null;
+
 
         telemetry.addData("power",0);
         telemetry.addData("error",0);
@@ -133,18 +133,22 @@ public class ShootingTuningCustomPID extends OpMode {
 
         coeffs = new PIDCoefficients(P,0,0);
         pidfController = new PIDFController(coeffs, (x, v) -> F);
+        pidfController.targetVelocity = currentSetpoint;
 
-        Motor.setVelocity(currentSetpoint);
+        double power = pidfController.update(System.nanoTime(), 0, Motor.getVelocity());
+
+        Motor.setPower(power);
 
         double SHOOTER_RPM = Motor.getVelocity() / SHOOTER_MOTOR_COUNTS_PER_REV * 60;
-        double error = currentSetpoint - Motor.getCurrentPosition();
+        double error = currentSetpoint - Motor.getVelocity();
 
 
         dashboardTelemetry.addData("error",error );
 
-        dashboardTelemetry.addData("Setpoint",currentSetpoint );
+        dashboardTelemetry.addData("TARGET VELOCITY",currentSetpoint );
+        dashboardTelemetry.addData("CURRENT VELOCITY",Motor.getVelocity() );
+
         dashboardTelemetry.addData("SHOOTER_RPM",SHOOTER_RPM );
-        dashboardTelemetry.addData("VELOCITY",Motor.getVelocity() );
 
 
         dashboardTelemetry.update();
