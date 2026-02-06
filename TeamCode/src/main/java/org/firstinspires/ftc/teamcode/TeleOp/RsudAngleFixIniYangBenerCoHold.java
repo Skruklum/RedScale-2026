@@ -227,9 +227,9 @@ public class RsudAngleFixIniYangBenerCoHold extends LinearOpMode {
             }
 
             // ===== SHOOTER ANGLE SERVO =====
-            if (gamepad2.x) setServoDegrees(0);
-            else if (gamepad2.y) setServoDegrees(45);
-            else if (gamepad2.b) setServoDegrees(90);
+            if (gamepad2.a) setServoDegrees(0);
+            else if (gamepad2.b) setServoDegrees(45);
+            else if (gamepad2.y) setServoDegrees(90);
 
             // ===== STOPPER =====
             if (gamepad2.dpad_right) stopperS.setPower(1);

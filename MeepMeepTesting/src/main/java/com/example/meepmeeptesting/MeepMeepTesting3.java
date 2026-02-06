@@ -1,6 +1,7 @@
 package com.example.meepmeeptesting;
 
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.TranslationalVelConstraint;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.noahbres.meepmeep.MeepMeep;
 import com.noahbres.meepmeep.roadrunner.DefaultBotBuilder;
@@ -16,17 +17,15 @@ public class MeepMeepTesting3 {
 
 
         myBot.runAction(myBot.getDrive().actionBuilder(new Pose2d(-61.85, 32.01, Math.toRadians(90)))
-                .strafeTo(new Vector2d(-11, 10))
+                .strafeTo(new Vector2d(-33, 28))
+                        .waitSeconds(0.1)
+                .splineToConstantHeading(new Vector2d(12.00, 23.80), Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(12.00, 50.80), Math.toRadians(90), new TranslationalVelConstraint(25))
+                        .waitSeconds(0.1)
+                        .setReversed(true)
+                .splineToConstantHeading(new Vector2d(12.00, 23.80), Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(-10.82, 24.2), Math.toRadians(90)) // Angle : 59.071675968
 
-
-                .splineToConstantHeading(new Vector2d(-12.95, 30.56), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(-12.95, 55.63), Math.toRadians(90.00))
-                .strafeTo(new Vector2d(-11, 10))
-
-
-                .splineToConstantHeading(new Vector2d(12.95, 29.94), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(12.54, 55.42), Math.toRadians(90))
-                .strafeTo(new Vector2d(-11, 10))
 
 
                 .build());

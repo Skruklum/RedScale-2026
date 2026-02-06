@@ -27,10 +27,10 @@ public class Stopper {
 
                 long elapsedTime = System.currentTimeMillis() - startTime;
 
-                if (elapsedTime < 1250) {
+                if (elapsedTime < 500) {
                     stopperServo.setPower(power);
                     packet.put("Stopper Status", power > 0 ? "Forward" : "Reverse");
-                    packet.put("Stopper Time Left", (1250 - elapsedTime) / 1000.0);
+                    packet.put("Stopper Time Left", (500 - elapsedTime) / 1000.0);
                     return true; // Keep running
                 } else {
                     stopperServo.setPower(0); // Shut off
@@ -41,7 +41,6 @@ public class Stopper {
         };
     }
 
-    // Keep the original for manual control if needed
     public Action setPower(double power) {
         return new Action() {
             @Override

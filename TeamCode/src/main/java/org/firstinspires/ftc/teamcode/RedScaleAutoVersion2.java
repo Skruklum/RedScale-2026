@@ -15,8 +15,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.controllers.RobotPoseController;
 import org.firstinspires.ftc.teamcode.controllers.ShooterRotatorController;
 
-@Autonomous(name = "Red_Scale_Auto", group = "Autonomous")
-public class RedScaleAuto extends LinearOpMode {
+@Autonomous(name = "Red_Scale_Auto_2", group = "Autonomous")
+public class RedScaleAutoVersion2 extends LinearOpMode {
 
     private ElapsedTime opModeTime = new ElapsedTime();
     private RobotPoseController robotPoseController;
@@ -79,47 +79,35 @@ public class RedScaleAuto extends LinearOpMode {
         TrajectoryActionBuilder trajectoryActionBuilder = drive.actionBuilder(initialPose)
                 .afterTime(0, () -> {shooterRotatorController.setTargetWorldAngle(reflect(55));})
                 .stopAndAdd(shooter.setState(true))
-                .strafeTo(reflectV(-27.5, 30), new TranslationalVelConstraint(70))
+                .strafeTo(reflectV(-27.5, 30))
                 .afterTime(0, intake.setPower(1))
 
-                .stopAndAdd(stopper.setPower(1.0))
-                .waitSeconds(2.5)
-                .afterTime(0, stopper.setPower(-1.0))
-                .afterTime(0, intake.setPower(0))
+                .afterTime(0, stopper.setPower(1.0))
+                .waitSeconds(2)
+                .afterTime(0, stopper.timedPower(-1.0))
 
 
                 // Part 1
                 .splineToConstantHeading(reflectV(-9.5, 25), reflect(Math.toRadians(90.00)))
-                .afterTime(0, intake.setPower(1))
-                .splineToConstantHeading(reflectV(-9.5, 62.5), reflect(Math.toRadians(90.00)), new TranslationalVelConstraint(20))
-                .afterTime(0, intake.setPower(0))
+                .splineToConstantHeading(reflectV(-9.5, 62.5), reflect(Math.toRadians(90.00)), new TranslationalVelConstraint(30))
                 .strafeTo(reflectV(-27.5, 30))
 
-
-                .afterTime(0, intake.setPower(1))
-                .stopAndAdd(stopper.setPower(1.0))
-                .waitSeconds(2.5)
-                .afterTime(0, stopper.setPower(-1.0))
-                .afterTime(0, intake.setPower(0))
+                .afterTime(0, stopper.setPower(1.0))
+                .waitSeconds(2)
+                .afterTime(0, stopper.timedPower(-1.0))
                 //
 
 
                 // Part 2
-                .splineToConstantHeading(reflectV(16.2, 25), reflect(Math.toRadians(90.00)))
-                .afterTime(0, intake.setPower(1))
-                .splineToConstantHeading(reflectV(16.2, 76.5), reflect(Math.toRadians(90.00)), new TranslationalVelConstraint(35))
-                .strafeTo(reflectV(16.2, 55), new TranslationalVelConstraint(80))
-                .afterTime(0, intake.setPower(0))
-                .strafeTo(reflectV(-24, 39.5), new TranslationalVelConstraint(80))
+                .splineToConstantHeading(reflectV(16.7, 25), reflect(Math.toRadians(90.00)))
+                .splineToConstantHeading(reflectV(16.7, 76.5), reflect(Math.toRadians(90.00)), new TranslationalVelConstraint(40))
+                .strafeTo(reflectV(16.7, 55))
+                .strafeTo(reflectV(-24, 39.5))
 
-
-                .stopAndAdd(stopper.timedPower(1.0))
-                .afterTime(0, intake.setPower(1))
-                .afterTime(0, intake.setPower(1))
+                .afterTime(0, stopper.setPower(1.0))
                 .waitSeconds(2)
-                .stopAndAdd(stopper.timedPower(-1.0))
-                .afterTime(0, intake.setPower(0));
-                //
+                .stopAndAdd(stopper.timedPower(-1.0));
+        //
 
         waitForStart();
 
