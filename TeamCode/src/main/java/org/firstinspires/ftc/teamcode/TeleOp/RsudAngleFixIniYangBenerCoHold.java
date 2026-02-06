@@ -42,13 +42,15 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+
 @Config
 @TeleOp(name = "RsudAngleFix_Merged_BlueAlliance", group = "TeleOp")
+
 public class RsudAngleFixIniYangBenerCoHold extends LinearOpMode {
 
-    // =========================================================================
-    //                            FILE 1 VARIABLES
-    // =========================================================================
+// =========================================================================
+//                            FILE 1 VARIABLES
+// =========================================================================
 
     // ---------------- HARDWARE ----------------
     private DcMotorEx shooter;
@@ -66,8 +68,8 @@ public class RsudAngleFixIniYangBenerCoHold extends LinearOpMode {
     static final double TURRET_GEAR_RATIO = 4.75;
     static final double CORE_HEX_TICKS_PER_REV = 288.0 * TURRET_GEAR_RATIO;
 
-    // Shooter Constants
-    static final double TARGET_RPM = 3000.0;
+    // Shooter Constants (UPDATED TO MATCH SHOOTER CLASS)
+    static final double TARGET_RPM = 2950.0;
     static final double SHOOTER_TICKS_PER_SEC = (TARGET_RPM / 60.0) * HD_HEX_TICKS_PER_REV;
 
     // Turret Constants
@@ -80,15 +82,16 @@ public class RsudAngleFixIniYangBenerCoHold extends LinearOpMode {
     boolean lastTrigger = false;
     boolean hasRumbled = false;
 
-    public static double PID_P = 20.0;
+    // (UPDATED PIDS TO MATCH SHOOTER CLASS)
+    public static double PID_P = 60.0;
     public static double PID_I = 0.0;
     public static double PID_D = 0.0;
-    public static double PID_F = 14.5;
+    public static double PID_F = 17.5;
     PIDFCoefficients ShooterPIDF = new PIDFCoefficients(PID_P, PID_I, PID_D, PID_F);
 
-    // =========================================================================
-    //                            FILE 2 VARIABLES
-    // =========================================================================
+// =========================================================================
+//                            FILE 2 VARIABLES
+// =========================================================================
 
     /* ================== PID ================== */
     // PID for when we see the tag (needs to be responsive)
@@ -182,6 +185,9 @@ public class RsudAngleFixIniYangBenerCoHold extends LinearOpMode {
         // IMPORTANT: Shooter must be in RUN_USING_ENCODER for RPM limiting to work
         shooter.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, ShooterPIDF);
 
+        // (UPDATED LOGIC: ADDED FLOAT BEHAVIOR FROM SHOOTER CLASS)
+        shooter.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.FLOAT);
+
         // ---------------- VISION INIT (FILE 2) ----------------
         initVision();
 
@@ -206,7 +212,7 @@ public class RsudAngleFixIniYangBenerCoHold extends LinearOpMode {
             else if (gamepad1.left_bumper) intake.setPower(-1);
             else intake.setPower(0);
 
-            // ===== SHOOTER TOGGLE (3000 RPM LIMIT) =====
+            // ===== SHOOTER TOGGLE (UPDATED 2950 RPM LIMIT) =====
             boolean trigger = gamepad2.right_trigger > 0.2;
             if (trigger && !lastTrigger) {
                 shooterOn = !shooterOn;
@@ -245,6 +251,24 @@ public class RsudAngleFixIniYangBenerCoHold extends LinearOpMode {
             //                        FILE 2 AUTO-AIM / VISION LOGIC
             // =================================================================
 
+            /* ================== MANUAL TURRET OVERRIDE ================== */
+            double manualTurretPower = 0;
+            if (gamepad2.right_bumper) {
+                manualTurretPower = -TURRET_POWER;
+            } else if (gamepad2.left_bumper) {
+                manualTurretPower = TURRET_POWER;
+            } else if (Math.abs(gamepad2.right_stick_x) > 0.05) {
+                manualTurretPower = -gamepad2.right_stick_x * 0.6;
+            }
+
+            // MODIFICATION START: Removed the force disable.
+            // If manual input is detected, we don't disable auto-aim permanently.
+            // We just override it in the logic below.
+            // if (manualTurretPower != 0) {
+            //    isAutoAim = false;
+            // }
+            // MODIFICATION END
+
             /* ================== AUTO AIM TOGGLE ================== */
             if (gamepad2.square && !lastSquare) {
                 isAutoAim = !isAutoAim;
@@ -269,7 +293,9 @@ public class RsudAngleFixIniYangBenerCoHold extends LinearOpMode {
             double rawBearing = 0;
             double bearingError = 0;
 
-            if (isAutoAim) {
+            // MODIFICATION START: Added check for (manualTurretPower == 0)
+            // Auto aim only runs if enabled AND driver is NOT touching the controls.
+            if (isAutoAim && manualTurretPower == 0) {
                 List<AprilTagDetection> detections = aprilTag.getDetections();
 
                 // Loop through detections to find our specific Tag ID
@@ -335,33 +361,19 @@ public class RsudAngleFixIniYangBenerCoHold extends LinearOpMode {
                 turretMotor.setPower(Range.clip(power, -1.0, 1.0));
             }
             else {
-                // Manual Control
-                // MERGED LOGIC: File 1 uses bumpers, File 2 uses Stick.
-                // Priority: Bumpers (File 1) -> Stick (File 2)
-
-                double manualPower = 0;
-
-                // File 1 Bumper Logic
-                if (gamepad2.right_bumper) {
-                    manualPower = -TURRET_POWER;
-                } else if (gamepad2.left_bumper) {
-                    manualPower = TURRET_POWER;
-                }
-                // File 2 Stick Logic (fallback)
-                else {
-                    manualPower = -gamepad2.right_stick_x * 0.6;
-                }
+                // Manual Control (Runs if Manual Power != 0 OR isAutoAim is False)
+                // (manualTurretPower was calculated at the start of the vision logic)
 
                 // Soft Limits (File 1 Logic primarily for manual safety)
                 int turretPos = turret.getCurrentPosition();
-                if (turretPos <= -TURRET_LIMIT_TICKS && manualPower < 0) {
-                    manualPower = 0;
+                if (turretPos <= -TURRET_LIMIT_TICKS && manualTurretPower < 0) {
+                    manualTurretPower = 0;
                 }
-                if (turretPos >= TURRET_LIMIT_TICKS && manualPower > 0) {
-                    manualPower = 0;
+                if (turretPos >= TURRET_LIMIT_TICKS && manualTurretPower > 0) {
+                    manualTurretPower = 0;
                 }
 
-                turretMotor.setPower(manualPower);
+                turretMotor.setPower(manualTurretPower);
                 isAtLimit = false;
             }
 
@@ -375,22 +387,22 @@ public class RsudAngleFixIniYangBenerCoHold extends LinearOpMode {
                 hasRumbled = true;
             }
 
-            telemetry.addData("Shooter", shooterOn ? "LIMITER ACTIVE" : "OFF");
-            telemetry.addData("Target RPM", TARGET_RPM);
-            telemetry.addData("Current RPM", "%.0f", currentRPM);
-            telemetry.addData("Turret Angle", "%.1f°", (turret.getCurrentPosition() / CORE_HEX_TICKS_PER_REV) * 360.0);
+            //   telemetry.addData("Shooter", shooterOn ? "LIMITER ACTIVE" : "OFF");
+            //  telemetry.addData("Target RPM", TARGET_RPM);
+            //  telemetry.addData("Current RPM", "%.0f", currentRPM);
+            //   telemetry.addData("Turret Angle", "%.1f°", (turret.getCurrentPosition() / CORE_HEX_TICKS_PER_REV) * 360.0);
 
             // ===== TELEMETRY (FILE 2) =====
-            telemetry.addLine("\n--- TURRET MATH (AUTO) ---");
+            //    telemetry.addLine("\n--- TURRET MATH (AUTO) ---");
             telemetry.addData("Mode", isAutoAim ? "AUTO AIM" : "MANUAL");
             telemetry.addData("Tag Visible", tagVisible);
-            telemetry.addData("Robot Yaw (IMU)", "%.2f", robotYaw);
-            telemetry.addData("Turret Pos (Deg Vision)", "%.2f", turretDeg);
-            telemetry.addData("Target World Angle", "%.2f", targetWorldAngle);
+            //  telemetry.addData("Robot Yaw (IMU)", "%.2f", robotYaw);
+            //  telemetry.addData("Turret Pos (Deg Vision)", "%.2f", turretDeg);
+            // telemetry.addData("Target World Angle", "%.2f", targetWorldAngle);
 
-            telemetry.addLine("\n--- VISION DEBUG ---");
-            telemetry.addData("Bearing Error", "%.3f", bearingError);
-            telemetry.addData("Using Vision PID", usingVisionGains);
+            //    telemetry.addLine("\n--- VISION DEBUG ---");
+            //  telemetry.addData("Bearing Error", "%.3f", bearingError);
+            //    telemetry.addData("Using Vision PID", usingVisionGains);
 
             telemetry.update();
         }
@@ -399,13 +411,13 @@ public class RsudAngleFixIniYangBenerCoHold extends LinearOpMode {
         visionPortal.close();
     }
 
-    // ---------------- HELPER FUNCTIONS (FILE 1) ----------------
+// ---------------- HELPER FUNCTIONS (FILE 1) ----------------
 
     private void setServoDegrees(double deg) {
         degree.setPosition(Math.min(1.0, Math.max(0.0, deg / 180.0)));
     }
 
-    // ---------------- HELPER FUNCTIONS (FILE 2) ----------------
+// ---------------- HELPER FUNCTIONS (FILE 2) ----------------
 
     private double normalizeAngle(double a) {
         while (a > 180) a -= 360;

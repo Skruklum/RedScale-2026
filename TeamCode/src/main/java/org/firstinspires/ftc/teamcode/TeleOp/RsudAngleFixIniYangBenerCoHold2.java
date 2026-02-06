@@ -385,22 +385,22 @@ import java.util.concurrent.atomic.AtomicReference;
                 hasRumbled = true;
             }
 
-            telemetry.addData("Shooter", shooterOn ? "LIMITER ACTIVE" : "OFF");
-            telemetry.addData("Target RPM", TARGET_RPM);
-            telemetry.addData("Current RPM", "%.0f", currentRPM);
-            telemetry.addData("Turret Angle", "%.1f°", (turret.getCurrentPosition() / CORE_HEX_TICKS_PER_REV) * 360.0);
+         //   telemetry.addData("Shooter", shooterOn ? "LIMITER ACTIVE" : "OFF");
+          //  telemetry.addData("Target RPM", TARGET_RPM);
+          //  telemetry.addData("Current RPM", "%.0f", currentRPM);
+         //   telemetry.addData("Turret Angle", "%.1f°", (turret.getCurrentPosition() / CORE_HEX_TICKS_PER_REV) * 360.0);
 
             // ===== TELEMETRY (FILE 2) =====
-            telemetry.addLine("\n--- TURRET MATH (AUTO) ---");
+        //    telemetry.addLine("\n--- TURRET MATH (AUTO) ---");
             telemetry.addData("Mode", isAutoAim ? "AUTO AIM" : "MANUAL");
             telemetry.addData("Tag Visible", tagVisible);
-            telemetry.addData("Robot Yaw (IMU)", "%.2f", robotYaw);
-            telemetry.addData("Turret Pos (Deg Vision)", "%.2f", turretDeg);
-            telemetry.addData("Target World Angle", "%.2f", targetWorldAngle);
+          //  telemetry.addData("Robot Yaw (IMU)", "%.2f", robotYaw);
+          //  telemetry.addData("Turret Pos (Deg Vision)", "%.2f", turretDeg);
+           // telemetry.addData("Target World Angle", "%.2f", targetWorldAngle);
 
-            telemetry.addLine("\n--- VISION DEBUG ---");
-            telemetry.addData("Bearing Error", "%.3f", bearingError);
-            telemetry.addData("Using Vision PID", usingVisionGains);
+        //    telemetry.addLine("\n--- VISION DEBUG ---");
+          //  telemetry.addData("Bearing Error", "%.3f", bearingError);
+        //    telemetry.addData("Using Vision PID", usingVisionGains);
 
             telemetry.update();
         }
