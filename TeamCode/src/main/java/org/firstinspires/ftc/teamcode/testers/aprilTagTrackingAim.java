@@ -47,7 +47,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 
 @Config
-@TeleOp(name ="AprilTag Tracking Aim", group = "Test")
+@TeleOp(name ="AprilTag Tracking Field Oriented", group = "Test")
 public class aprilTagTrackingAim extends OpMode {
 
     /* ================== RATIO ================== */
