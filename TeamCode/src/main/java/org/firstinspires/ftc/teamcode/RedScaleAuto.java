@@ -53,6 +53,8 @@ public class RedScaleAuto extends LinearOpMode {
         shooter = new Shooter(hardwareMap);
         stopper = new Stopper(hardwareMap);
 
+        robotPoseController.resetYaw();
+
         while (true) {
             if (gamepad1.crossWasPressed()) {
                 isBlue = !isBlue;

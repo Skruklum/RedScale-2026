@@ -103,7 +103,7 @@ public class aprilTagTrackingAim extends OpMode {
     private double robotPoseYaw = 0;
 
     private Pose2d RedAlliance_AprilTag_Position = new Pose2d(-58.14,58.14,Math.toRadians(-40));
-    private Pose2d BlueAlliance_AprilTag_Position = new Pose2d(58.14,-58.14,Math.toRadians(40));
+    private Pose2d BlueAlliance_AprilTag_Position = new Pose2d(-58.14,-58.14,Math.toRadians(40));
 
     enum AimState {
         SNAP_TO_BEARING,

@@ -22,10 +22,12 @@ public class RobotPoseController {
                 )
         );
         imu.initialize(parameters);
-        imu.resetYaw();
-
         yawOffset = getYaw();
     }
+    public void resetYaw() {
+        imu.resetYaw();
+    }
+
 
     public double getYaw() {
         return imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
