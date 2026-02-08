@@ -40,7 +40,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Config
-@TeleOp(name ="AprilTag AutoAim CENTER + LIMITER", group = "Test")
+
 public class AprilTagTracking2Agi extends OpMode {
 
     /* ================== PID ================== */

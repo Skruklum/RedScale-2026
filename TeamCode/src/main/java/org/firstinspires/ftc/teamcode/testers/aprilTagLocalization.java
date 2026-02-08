@@ -51,7 +51,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 
 @Config
-@TeleOp(name ="April Tag Localization", group = "Test")
+
 public class aprilTagLocalization extends OpMode {
     private double SHOOTER_MOTOR_COUNTS_PER_REV = 28.0;
 

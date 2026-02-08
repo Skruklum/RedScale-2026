@@ -14,7 +14,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.teamcode.controllers.PIDCoefficients;
 import org.firstinspires.ftc.teamcode.controllers.PIDFController;
 
-@TeleOp(name = "Auto Lock Aim", group = "Test")
+
 
 public class AutoLockAim extends  LinearOpMode {
     private Telemetry dashboardTelemetry;

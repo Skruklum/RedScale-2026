@@ -19,7 +19,7 @@ import org.firstinspires.ftc.teamcode.controllers.PIDFController;
 import org.firstinspires.ftc.teamcode.controllers.RobotPoseController;
 import org.firstinspires.ftc.teamcode.controllers.ShooterRotatorController;
 
-@TeleOp(name = "Auto Lock Aim v2 (Clamped)", group = "Competition")
+
 public class AutoLockAim2 extends LinearOpMode {
 
     // --- HARDWARE ---

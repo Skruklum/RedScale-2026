@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 
 @Config
-@TeleOp(name ="April Tag Test", group = "Test")
+
 public class aprilTagTest extends OpMode {
 
     // Tuning & Constants

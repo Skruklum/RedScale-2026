@@ -10,7 +10,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 
-@TeleOp(name = "Shooter Tests", group = "Test")
+
 
 public class shooterTests extends OpMode {
 

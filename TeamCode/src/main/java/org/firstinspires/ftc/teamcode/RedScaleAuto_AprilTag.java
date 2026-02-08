@@ -18,7 +18,6 @@ import org.firstinspires.ftc.teamcode.controllers.ShooterRotatorController;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 
 
-@Autonomous(name = "Red_Scale_Test_Auto_AprilTag", group = "Autonomous Test")
 public class RedScaleAuto_AprilTag extends LinearOpMode {
 
     private ElapsedTime opModeTime = new ElapsedTime();

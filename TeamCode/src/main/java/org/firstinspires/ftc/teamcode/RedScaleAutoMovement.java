@@ -6,7 +6,6 @@ import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-@Autonomous(name = "Red_Scale_Test_Auto_Movement", group = "Autonomous")
 public class RedScaleAutoMovement extends LinearOpMode {
     @Override
     public void runOpMode() {

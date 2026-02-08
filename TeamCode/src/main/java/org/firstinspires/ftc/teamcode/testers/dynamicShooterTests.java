@@ -14,7 +14,7 @@ import org.firstinspires.ftc.teamcode.controllers.ShooterController;
 
 import java.lang.reflect.Array;
 
-@TeleOp(name = "Dynamic Shooting Test", group = "Test")
+
 
 public class dynamicShooterTests  extends OpMode {
 

@@ -46,7 +46,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Config
-@TeleOp(name ="AprilTag Strafe Idk", group = "Test")
+
 public class TrackStrafeIdkManShit extends OpMode {
 
     /* ================== RATIO ================== */

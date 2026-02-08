@@ -15,7 +15,6 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.controllers.RobotPoseController;
 import org.firstinspires.ftc.teamcode.controllers.ShooterRotatorController;
 
-@Autonomous(name = "Red_Scale_Auto_2", group = "Autonomous")
 public class RedScaleAutoVersion2 extends LinearOpMode {
 
     private ElapsedTime opModeTime = new ElapsedTime();

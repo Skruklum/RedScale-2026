@@ -6,7 +6,6 @@ import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-@Autonomous(name = "Red_Scale_Test_Auto_Blue", group = "Autonomous")
 public class RedScaleAutoBlue extends LinearOpMode {
 
     // Set this to true for Red Alliance, false for Blue
@@ -29,6 +28,7 @@ public class RedScaleAutoBlue extends LinearOpMode {
         Intake intake = new Intake(hardwareMap);
         Shooter shooter = new Shooter(hardwareMap);
         Stopper stopper = new Stopper(hardwareMap);
+
 
         waitForStart();
         if (isStopRequested()) return;

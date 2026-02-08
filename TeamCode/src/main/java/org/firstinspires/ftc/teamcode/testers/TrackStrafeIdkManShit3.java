@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Config
-@TeleOp(name ="FullStrafe_RED_ALLIANCE", group = "Test")
+
 public class TrackStrafeIdkManShit3 extends OpMode {
 
     /* ================== PID ================== */

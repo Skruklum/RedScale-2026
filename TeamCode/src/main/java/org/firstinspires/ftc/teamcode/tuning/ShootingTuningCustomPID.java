@@ -18,7 +18,6 @@ import java.lang.reflect.Array;
 
 
 @Config
-@TeleOp(group = "Tuning", name = "Shooting Tuning Custom PID")
 public class ShootingTuningCustomPID extends OpMode {
     private DcMotorEx Motor;
 
