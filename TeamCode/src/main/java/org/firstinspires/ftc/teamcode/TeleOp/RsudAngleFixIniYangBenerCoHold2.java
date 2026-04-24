@@ -27,7 +27,7 @@ public class RsudAngleFixIniYangBenerCoHold2 extends LinearOpMode {
     private Servo shooterServo;
     private IMU imu;
     private ColorSensor colorSensor;
-
+    private CRServo stopperServo;
     // ---------------- CONSTANTS ----------------
     // HD Hex (No Gearbox) = 28 ticks per rev
     static final double HD_HEX_TICKS_PER_REV = 28.0;
@@ -72,6 +72,7 @@ public class RsudAngleFixIniYangBenerCoHold2 extends LinearOpMode {
 
         leftServo    = hardwareMap.get(CRServo.class, "lServo");
         shooterServo = hardwareMap.get(Servo.class, "sServo");
+        stopperServo = hardwareMap.get(CRServo.class, "stopServo");
 
         frontLeft  = hardwareMap.get(DcMotorEx.class, "front_left_drive");
         frontRight = hardwareMap.get(DcMotorEx.class, "front_right_drive");
@@ -136,6 +137,17 @@ public class RsudAngleFixIniYangBenerCoHold2 extends LinearOpMode {
             } else {
                 intake.setPower(0);
             }
+
+            // ===== STOPPER =====
+
+            if (gamepad2.dpad_right) {
+                stopperServo.setPower(1);
+            } else if (gamepad2.dpad_left) {
+                stopperServo.setPower(-1);
+            } else {
+                stopperServo.setPower(0);
+            }
+
 
             // ===== BACK INTAKE =====
             if (gamepad1.right_trigger > 0) {
@@ -280,7 +292,7 @@ public class RsudAngleFixIniYangBenerCoHold2 extends LinearOpMode {
      */
     private void antiClogIntake() {
         intake.setPower(1);
-        intake2.setPower(0.69);
+        intake2.setPower(-1);
         // Raw power mode needed for negative power (velocity PID can't command negative)
         shooterTop.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         shooterBottom.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
