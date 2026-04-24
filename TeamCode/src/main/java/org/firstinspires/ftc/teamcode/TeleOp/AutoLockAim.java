@@ -15,6 +15,7 @@ import org.firstinspires.ftc.teamcode.controllers.PIDCoefficients;
 import org.firstinspires.ftc.teamcode.controllers.PIDFController;
 
 
+@TeleOp
 
 public class AutoLockAim extends  LinearOpMode {
     private Telemetry dashboardTelemetry;

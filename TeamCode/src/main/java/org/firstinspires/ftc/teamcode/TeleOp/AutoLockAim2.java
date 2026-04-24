@@ -19,7 +19,7 @@ import org.firstinspires.ftc.teamcode.controllers.PIDFController;
 import org.firstinspires.ftc.teamcode.controllers.RobotPoseController;
 import org.firstinspires.ftc.teamcode.controllers.ShooterRotatorController;
 
-
+@TeleOp
 public class AutoLockAim2 extends LinearOpMode {
 
     // --- HARDWARE ---
