@@ -7,7 +7,6 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.TranslationalVelConstraint;
 import com.acmerobotics.roadrunner.Vector2d;
-import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -15,8 +14,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.controllers.RobotPoseController;
 import org.firstinspires.ftc.teamcode.controllers.ShooterRotatorController;
 
-@Autonomous(name = "Red_Scale_Auto", group = "Autonomous")
-public class RedScaleAuto extends LinearOpMode {
+@Autonomous(name = "Red_Scale_Auto_PLAYOFF", group = "Autonomous")
+public class RedScaleAuto2 extends LinearOpMode {
 
     private ElapsedTime opModeTime = new ElapsedTime();
     private RobotPoseController robotPoseController;
@@ -73,54 +72,12 @@ public class RedScaleAuto extends LinearOpMode {
 
         // Initialize your MecanumDrive (this contains your 2-dead wheel localizer)
         // Make sure the starting Pose matches your MeepMeep code exactly
-        Pose2d initialPose = reflect(-60, 35, Math.toRadians(90));
+        Pose2d initialPose = reflect(62, 10, Math.toRadians(90));
         drive = new MecanumDrive(hardwareMap, initialPose);
 
         TrajectoryActionBuilder trajectoryActionBuilder = drive.actionBuilder(initialPose)
-                .afterTime(0, () -> {shooterRotatorController.setTargetWorldAngle(reflect(55));})
-                .stopAndAdd(shooter.setState(true))
-                .strafeTo(reflectV(-27.5, 30), new TranslationalVelConstraint(70))
-                .afterTime(0, intake.setPower(1))
-
-                .stopAndAdd(stopper.setPower(1.0))
-                .waitSeconds(2.5)
-                .afterTime(0, stopper.setPower(-1.0))
-                .afterTime(0, intake.setPower(0))
-
-
-                // Part 1
-                .splineToConstantHeading(reflectV(-9.5, 25), reflect(Math.toRadians(90.00)))
-                .afterTime(0, intake.setPower(1))
-                .splineToConstantHeading(reflectV(-9.5, 62.5), reflect(Math.toRadians(90.00)), new TranslationalVelConstraint(20))
-                .afterTime(0, intake.setPower(0))
-                .strafeTo(reflectV(-27.5, 30))
-
-
-                .afterTime(0, intake.setPower(1))
-                .stopAndAdd(stopper.setPower(1.0))
-                .waitSeconds(2.5)
-                .afterTime(0, stopper.setPower(-1.0))
-                .afterTime(0, intake.setPower(0))
-                //
-
-
-                // Part 2
-                .splineToConstantHeading(reflectV(16.2, 25), reflect(Math.toRadians(90.00)))
-                .afterTime(0, intake.setPower(1))
-                .splineToConstantHeading(reflectV(16.2, 76.5), reflect(Math.toRadians(90.00)), new TranslationalVelConstraint(35))
-                .strafeTo(reflectV(16.2, 55), new TranslationalVelConstraint(80))
-                .afterTime(0, intake.setPower(0))
-                .strafeTo(reflectV(-24, 39.5), new TranslationalVelConstraint(80))
-
-
-                .stopAndAdd(stopper.timedPower(1.0))
-                .afterTime(0, intake.setPower(1))
-                .afterTime(0, intake.setPower(1))
-                .waitSeconds(2)
-                .stopAndAdd(stopper.timedPower(-1.0))
-                .afterTime(0, intake.setPower(0));
-                //
-
+                        .strafeTo(reflectV(62, 50))
+                                .waitSeconds(3);
         waitForStart();
 
         if (isStopRequested()) return;
@@ -148,9 +105,6 @@ public class RedScaleAuto extends LinearOpMode {
             packet.put("time", opModeTime);
 
             robotPoseController.update();
-            shooterRotatorController.update();
-
-            shooterRotatorController.activate();
 
             running = action.run(packet);
 
