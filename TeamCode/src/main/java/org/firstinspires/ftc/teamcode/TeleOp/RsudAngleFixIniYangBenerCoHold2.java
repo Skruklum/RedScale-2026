@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -18,35 +19,37 @@ import com.qualcomm.robotcore.hardware.Servo;
 public class RsudAngleFixIniYangBenerCoHold2 extends LinearOpMode {
 
     // ---------------- HARDWARE ----------------
-    private DcMotorEx shooter;
-    private DcMotor intake;
-    private DcMotorEx turret;
-    private Servo degree;
-    private CRServo stopperS;
-
+    private DcMotor intake, intake2;
+    private DcMotorEx shooterTop, shooterBottom;
     private DcMotorEx frontLeft, frontRight, backLeft, backRight;
+    private CRServo leftServo;
+    private Servo shooterServo;
     private IMU imu;
 
     // ---------------- CONSTANTS ----------------
     // HD Hex (No Gearbox) = 28 ticks per rev
     static final double HD_HEX_TICKS_PER_REV = 28.0;
 
-    // Shooter Constants (KEPT AS REQUESTED)
-    static final double TARGET_RPM = 2950.0;
+    // Shooter Constants — Ultra Planetary HD Hex max = 6000 RPM
+    static final double TARGET_RPM = 6000.0;
+    // Ticks/sec = (6000 / 60) * 28 = 2800
     static final double SHOOTER_TICKS_PER_SEC = (TARGET_RPM / 60.0) * HD_HEX_TICKS_PER_REV;
 
     // Turret Constants
-    static final double TURRET_POWER = 0.8; // Speed for manual control
+    static final double TURRET_POWER = 0.8;
+
     // ---------------- STATE ----------------
     boolean shooterOn = false;
     boolean lastTrigger = false;
     boolean hasRumbled = false;
 
-    // (SHOOTER PID - UNTOUCHED)
-    public static double PID_P = 78.0;
+    // ---------------- SHOOTER PIDF ----------------
+    // F = 32767 / SHOOTER_TICKS_PER_SEC = 32767 / 2800 = ~11.702
+    // P increased for fast velocity recovery at 6000 RPM
+    public static double PID_P = 90.0;
     public static double PID_I = 0.0;
     public static double PID_D = 0.0;
-    public static double PID_F = 16.12222;
+    public static double PID_F = 11.702;
     PIDFCoefficients ShooterPIDF = new PIDFCoefficients(PID_P, PID_I, PID_D, PID_F);
 
     @Override
@@ -55,16 +58,19 @@ public class RsudAngleFixIniYangBenerCoHold2 extends LinearOpMode {
         // ---------------- HARDWARE MAP ----------------
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
-        turret = hardwareMap.get(DcMotorEx.class, "shooterRot");
-        degree = hardwareMap.get(Servo.class, "shooterAd");
-        intake = hardwareMap.get(DcMotor.class, "intake");
-        shooter = hardwareMap.get(DcMotorEx.class, "shooter");
-        stopperS = hardwareMap.get(CRServo.class, "stopper");
+        intake  = hardwareMap.get(DcMotor.class, "intake");
+        intake2 = hardwareMap.get(DcMotor.class, "intake2");
 
-        frontLeft = hardwareMap.get(DcMotorEx.class, "front_left_drive");
+        shooterTop    = hardwareMap.get(DcMotorEx.class, "shooter1");
+        shooterBottom = hardwareMap.get(DcMotorEx.class, "shooter2");
+
+        leftServo    = hardwareMap.get(CRServo.class, "lServo");
+        shooterServo = hardwareMap.get(Servo.class, "sServo");
+
+        frontLeft  = hardwareMap.get(DcMotorEx.class, "front_left_drive");
         frontRight = hardwareMap.get(DcMotorEx.class, "front_right_drive");
-        backLeft = hardwareMap.get(DcMotorEx.class, "back_left_drive");
-        backRight = hardwareMap.get(DcMotorEx.class, "back_right_drive");
+        backLeft   = hardwareMap.get(DcMotorEx.class, "back_left_drive");
+        backRight  = hardwareMap.get(DcMotorEx.class, "back_right_drive");
 
         imu = hardwareMap.get(IMU.class, "imu");
         imu.initialize(new IMU.Parameters(
@@ -76,69 +82,105 @@ public class RsudAngleFixIniYangBenerCoHold2 extends LinearOpMode {
         // ---------------- MOTOR DIRECTIONS ----------------
         frontLeft.setDirection(DcMotor.Direction.REVERSE);
         backLeft.setDirection(DcMotor.Direction.REVERSE);
-        frontRight.setDirection(DcMotor.Direction.FORWARD);
+        frontRight.setDirection(DcMotor.Direction.REVERSE);
         backRight.setDirection(DcMotor.Direction.FORWARD);
 
-        shooter.setDirection(DcMotor.Direction.REVERSE);
-        turret.setDirection(DcMotor.Direction.REVERSE);
         intake.setDirection(DcMotor.Direction.REVERSE);
+        intake2.setDirection(DcMotor.Direction.FORWARD);
 
-        // ---------------- ENCODER SETUP ----------------
-        turret.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        turret.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        turret.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        shooterTop.setDirection(DcMotor.Direction.FORWARD);
+        shooterBottom.setDirection(DcMotor.Direction.REVERSE);
 
-        // IMPORTANT: Shooter must be in RUN_USING_ENCODER for RPM limiting to work
-        shooter.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, ShooterPIDF);
-        // SHOOTER FLOAT BEHAVIOR (KEPT)
-        shooter.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.FLOAT);
+        // ---------------- SHOOTER ENCODER + PID SETUP ----------------
+        shooterTop.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        shooterBottom.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        telemetry.addLine("Ready to Start (Manual Turret - NO LIMITS)");
+        shooterTop.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        shooterBottom.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        shooterTop.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, ShooterPIDF);
+        shooterBottom.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, ShooterPIDF);
+
+        shooterTop.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        shooterBottom.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+
+        telemetry.addLine("Ready to Start");
         telemetry.update();
 
         waitForStart();
 
         while (opModeIsActive()) {
-            // Check if coefficients need updating (add this inside the while loop)
 
-
-            if (PID_F != ShooterPIDF.f || PID_P != ShooterPIDF.p) {
+            // ===== LIVE PIDF TUNING via FTC Dashboard =====
+            if (PID_F != ShooterPIDF.f || PID_P != ShooterPIDF.p
+                    || PID_I != ShooterPIDF.i || PID_D != ShooterPIDF.d) {
                 ShooterPIDF = new PIDFCoefficients(PID_P, PID_I, PID_D, PID_F);
-                shooter.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, ShooterPIDF);
+                shooterTop.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, ShooterPIDF);
+                shooterBottom.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, ShooterPIDF);
             }
 
-            // ===== INTAKE =====
-            if (gamepad1.right_bumper) intake.setPower(1);
-            else if (gamepad1.left_bumper) intake.setPower(-1);
-            else intake.setPower(0);
-
-            // ===== SHOOTER TOGGLE (KEPT) =====
-            boolean trigger = gamepad2.right_trigger > 0.2;
-            if (trigger && !lastTrigger) {
-                shooterOn = !shooterOn;
-                hasRumbled = false;
-            }
-            lastTrigger = trigger;
-
-            if (shooterOn) {
-                shooter.setVelocity(SHOOTER_TICKS_PER_SEC);
+            // ===== FRONT INTAKE =====
+            if (gamepad1.right_bumper) {
+                intake.setPower(1);
+            } else if (gamepad1.left_bumper) {
+                intake.setPower(-1);
             } else {
-                shooter.setVelocity(0);
+                intake.setPower(0);
+            }
+
+            // ===== BACK INTAKE =====
+            if (gamepad1.right_trigger > 0) {
+                intake2.setPower(1);
+            } else if (gamepad1.left_trigger > 0) {
+                intake2.setPower(-1);
+            } else {
+                intake2.setPower(0.0);
+            }
+
+            // ===== ANTI-CLOG (gamepad2 left trigger) =====
+            if (gamepad2.left_trigger > 0.2) {
+                antiClogIntake();
+            }
+            // ===== SHOOTER TOGGLE (gamepad2 right trigger) =====
+            else {
+                boolean trigger = gamepad2.right_trigger > 0.2;
+                if (trigger && !lastTrigger) shooterOn = !shooterOn;
+                lastTrigger = trigger;
+
+                if (shooterOn) {
+                    // Restore PID mode in case anti-clog switched it away
+                    if (shooterTop.getMode() != DcMotor.RunMode.RUN_USING_ENCODER) {
+                        shooterTop.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                        shooterBottom.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                        shooterTop.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, ShooterPIDF);
+                        shooterBottom.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, ShooterPIDF);
+                    }
+                    // setVelocity commands the PID to hold exactly TARGET_RPM
+                    shooterTop.setVelocity(SHOOTER_TICKS_PER_SEC);
+                    shooterBottom.setVelocity(SHOOTER_TICKS_PER_SEC);
+                } else {
+                    shooterTop.setPower(0.0);
+                    shooterBottom.setPower(0.0);
+                }
+            }
+
+            // ===== TURRET MANUAL =====
+            if (gamepad2.right_bumper) {
+                leftServo.setPower(-1.0);
+            } else if (gamepad2.left_bumper) {
+                leftServo.setPower(1.0);
+            } else {
+                leftServo.setPower(0.0);
             }
 
             // ===== SHOOTER ANGLE SERVO =====
-            if (gamepad2.a) setServoDegrees(0);
-            else if (gamepad2.b) setServoDegrees(45);
-            else if (gamepad2.y) setServoDegrees(90);
-
-            // ===== STOPPER =====
-            if (gamepad2.dpad_right) stopperS.setPower(1);
-            else if (gamepad2.dpad_left) stopperS.setPower(-1);
-            else stopperS.setPower(0);
+            if (gamepad2.x)      setServoDegrees(0);
+            else if (gamepad2.y) setServoDegrees(45);
+            else if (gamepad2.b) setServoDegrees(90);
 
             // ===== DRIVE =====
-            double y = -gamepad1.left_stick_y;
-            double x = -gamepad1.left_stick_x;
+            double y  = -gamepad1.left_stick_y;
+            double x  = -gamepad1.left_stick_x;
             double rx = -gamepad1.right_stick_x;
 
             double max = Math.max(1.0, Math.abs(y) + Math.abs(x) + Math.abs(rx));
@@ -147,43 +189,38 @@ public class RsudAngleFixIniYangBenerCoHold2 extends LinearOpMode {
             backLeft.setPower((y - x + rx) / max);
             backRight.setPower((y + x - rx) / max);
 
-            // =================================================================
-            //                        MANUAL TURRET LOGIC
-            // =================================================================
-
-            double manualTurretPower = 0;
-
-            if (gamepad2.right_bumper) {
-                manualTurretPower = -TURRET_POWER;
-            } else if (gamepad2.left_bumper) {
-                manualTurretPower = TURRET_POWER;
-            } else if (Math.abs(gamepad2.right_stick_x) > 0.05) {
-                // Analog control using stick
-                manualTurretPower = -gamepad2.right_stick_x * 0.6;
-            }
-
-            // Direct power set - NO LIMITERS, NO PID
-            turret.setPower(manualTurretPower);
-
-
-            // ===== TELEMETRY & RUMBLE =====
-            double currentRPM = (shooter.getVelocity() * 60.0) / HD_HEX_TICKS_PER_REV;
-
-            // Rumble when we hit the target RPM (+/- 50 RPM)
-            if (shooterOn && !hasRumbled && currentRPM >= (TARGET_RPM - 50)) {
-                gamepad2.rumble(500);
-                hasRumbled = true;
-            }
-
-            telemetry.addData("Shooter Mode", shooterOn ? "ON" : "OFF");
+            // ===== TELEMETRY =====
+            telemetry.addData("Shooter On", shooterOn);
             telemetry.addData("Target RPM", TARGET_RPM);
-            telemetry.addData("Current RPM", "%.0f", currentRPM);
-            telemetry.addData("Turret Power", "%.2f", manualTurretPower);
+            telemetry.addData("Target Ticks/s", SHOOTER_TICKS_PER_SEC);
+            telemetry.addData("Top Velocity (ticks/s)",    shooterTop.getVelocity());
+            telemetry.addData("Bottom Velocity (ticks/s)", shooterBottom.getVelocity());
+            telemetry.addData("Top RPM",    (shooterTop.getVelocity() / HD_HEX_TICKS_PER_REV) * 60.0);
+            telemetry.addData("Bottom RPM", (shooterBottom.getVelocity() / HD_HEX_TICKS_PER_REV) * 60.0);
             telemetry.update();
         }
     }
 
+    // ---------------- FUNCTIONS ----------------
+
+    /**
+     * Anti-Clog: runs both intakes forward and spins shooter motors at -0.3 raw power
+     * to break up any jammed rings. Triggered by gamepad2 left_trigger.
+     */
+    private void antiClogIntake() {
+        intake.setPower(1);
+        intake2.setPower(0.69);
+        // Raw power mode needed for -0.3 (velocity PID can't command negative)
+        shooterTop.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        shooterBottom.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        shooterTop.setPower(-0.7);
+        shooterBottom.setPower(-0.7);
+    }
+
+    /**
+     * Sets the shooter angle servo position from a degree value (0–180).
+     */
     private void setServoDegrees(double deg) {
-        degree.setPosition(Math.min(1.0, Math.max(0.0, deg / 180.0)));
+        shooterServo.setPosition(Math.min(1.0, Math.max(0.0, deg / 180.0)));
     }
 }
