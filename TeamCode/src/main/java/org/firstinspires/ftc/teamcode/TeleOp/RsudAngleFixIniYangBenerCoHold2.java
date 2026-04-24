@@ -6,6 +6,7 @@ import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -25,6 +26,7 @@ public class RsudAngleFixIniYangBenerCoHold2 extends LinearOpMode {
     private CRServo leftServo;
     private Servo shooterServo;
     private IMU imu;
+    private ColorSensor colorSensor;
 
     // ---------------- CONSTANTS ----------------
     // HD Hex (No Gearbox) = 28 ticks per rev
@@ -42,6 +44,10 @@ public class RsudAngleFixIniYangBenerCoHold2 extends LinearOpMode {
     boolean shooterOn = false;
     boolean lastTrigger = false;
     boolean hasRumbled = false;
+
+    // ---------------- COLOR SENSOR STATE ----------------
+    private long colorDetectStartTime = 0;
+    private boolean colorDetecting = false;
 
     // ---------------- SHOOTER PIDF ----------------
     // F = 32767 / SHOOTER_TICKS_PER_SEC = 32767 / 2800 = ~11.702
@@ -71,6 +77,9 @@ public class RsudAngleFixIniYangBenerCoHold2 extends LinearOpMode {
         frontRight = hardwareMap.get(DcMotorEx.class, "front_right_drive");
         backLeft   = hardwareMap.get(DcMotorEx.class, "back_left_drive");
         backRight  = hardwareMap.get(DcMotorEx.class, "back_right_drive");
+
+        colorSensor = hardwareMap.get(ColorSensor.class, "colorSensor");
+        colorSensor.enableLed(true);
 
         imu = hardwareMap.get(IMU.class, "imu");
         imu.initialize(new IMU.Parameters(
@@ -189,6 +198,9 @@ public class RsudAngleFixIniYangBenerCoHold2 extends LinearOpMode {
             backLeft.setPower((y - x + rx) / max);
             backRight.setPower((y + x - rx) / max);
 
+            // ===== COLOR SENSOR CHECK =====
+            checkColorAndRumble();
+
             // ===== TELEMETRY =====
             telemetry.addData("Shooter On", shooterOn);
             telemetry.addData("Target RPM", TARGET_RPM);
@@ -197,6 +209,10 @@ public class RsudAngleFixIniYangBenerCoHold2 extends LinearOpMode {
             telemetry.addData("Bottom Velocity (ticks/s)", shooterBottom.getVelocity());
             telemetry.addData("Top RPM",    (shooterTop.getVelocity() / HD_HEX_TICKS_PER_REV) * 60.0);
             telemetry.addData("Bottom RPM", (shooterBottom.getVelocity() / HD_HEX_TICKS_PER_REV) * 60.0);
+            telemetry.addData("Color R", colorSensor.red());
+            telemetry.addData("Color G", colorSensor.green());
+            telemetry.addData("Color B", colorSensor.blue());
+            telemetry.addData("Color Detecting", colorDetecting);
             telemetry.update();
         }
     }
@@ -204,13 +220,44 @@ public class RsudAngleFixIniYangBenerCoHold2 extends LinearOpMode {
     // ---------------- FUNCTIONS ----------------
 
     /**
-     * Anti-Clog: runs both intakes forward and spins shooter motors at -0.3 raw power
+     * Checks if the Color Sensor v3 detects purple or green for 2 continuous seconds.
+     * If so, vibrates gamepad1 for 2 seconds.
+     */
+    private void checkColorAndRumble() {
+        int r = colorSensor.red();
+        int g = colorSensor.green();
+        int b = colorSensor.blue();
+
+        boolean isPurple = (r > 80 && b > 80 && g < 60);
+        boolean isGreen  = (g > 100 && r < 80 && b < 80);
+
+        if (isPurple || isGreen) {
+            if (!colorDetecting) {
+                // Start the timer on first detection
+                colorDetectStartTime = System.currentTimeMillis();
+                colorDetecting = true;
+            } else if (System.currentTimeMillis() - colorDetectStartTime >= 2000) {
+                // Held for 2 seconds — rumble gamepad1 for 2 seconds
+                gamepad1.rumble(1.0, 1.0, 2000);
+                // Reset so it doesn't spam rumble every loop
+                colorDetecting = false;
+                colorDetectStartTime = 0;
+            }
+        } else {
+            // Color lost — reset the timer
+            colorDetecting = false;
+            colorDetectStartTime = 0;
+        }
+    }
+
+    /**
+     * Anti-Clog: runs both intakes forward and spins shooter motors at -0.7 raw power
      * to break up any jammed rings. Triggered by gamepad2 left_trigger.
      */
     private void antiClogIntake() {
         intake.setPower(1);
         intake2.setPower(0.69);
-        // Raw power mode needed for -0.3 (velocity PID can't command negative)
+        // Raw power mode needed for negative power (velocity PID can't command negative)
         shooterTop.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         shooterBottom.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         shooterTop.setPower(-0.7);
