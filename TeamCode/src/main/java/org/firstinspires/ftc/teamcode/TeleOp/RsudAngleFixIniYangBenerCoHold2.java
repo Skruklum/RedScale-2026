@@ -220,16 +220,33 @@ public class RsudAngleFixIniYangBenerCoHold2 extends LinearOpMode {
     // ---------------- FUNCTIONS ----------------
 
     /**
-     * Checks if the Color Sensor v3 detects purple or green for 2 continuous seconds.
+     * Checks if the Color Sensor v3 detects purple or green for 2 continuous seconds
+     * using ratio-based detection for reliability across different distances and lighting.
      * If so, vibrates gamepad1 for 2 seconds.
      */
     private void checkColorAndRumble() {
         int r = colorSensor.red();
         int g = colorSensor.green();
         int b = colorSensor.blue();
+        int total = r + g + b;
 
-        boolean isPurple = (r > 80 && b > 80 && g < 60);
-        boolean isGreen  = (g > 100 && r < 80 && b < 80);
+        // Avoid division by zero if sensor reads nothing
+        if (total < 30) {
+            colorDetecting = false;
+            colorDetectStartTime = 0;
+            return;
+        }
+
+        // Normalize to ratios (0.0 – 1.0)
+        double rRatio = (double) r / total;
+        double gRatio = (double) g / total;
+        double bRatio = (double) b / total;
+
+        // Purple: red and blue are both dominant, green is weak
+        boolean isPurple = (rRatio > 0.25 && bRatio > 0.25 && gRatio < 0.30);
+
+        // Green: green is clearly dominant
+        boolean isGreen  = (gRatio > 0.40 && rRatio < 0.35 && bRatio < 0.30);
 
         if (isPurple || isGreen) {
             if (!colorDetecting) {
@@ -248,6 +265,13 @@ public class RsudAngleFixIniYangBenerCoHold2 extends LinearOpMode {
             colorDetecting = false;
             colorDetectStartTime = 0;
         }
+
+        // Debug telemetry — use these to fine-tune thresholds
+        telemetry.addData("rRatio", String.format("%.2f", rRatio));
+        telemetry.addData("gRatio", String.format("%.2f", gRatio));
+        telemetry.addData("bRatio", String.format("%.2f", bRatio));
+        telemetry.addData("isPurple", isPurple);
+        telemetry.addData("isGreen",  isGreen);
     }
 
     /**
