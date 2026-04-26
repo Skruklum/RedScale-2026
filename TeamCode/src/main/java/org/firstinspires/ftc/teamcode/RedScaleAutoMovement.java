@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.TranslationalVelConstraint;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -21,17 +22,11 @@ public class RedScaleAutoMovement extends LinearOpMode {
         // Build and execute the action
         Actions.runBlocking(
                 drive.actionBuilder(initialPose)
-                        .strafeTo(new Vector2d(30, 0))
-                        .waitSeconds(0.3)
-                        .strafeTo(new Vector2d(30, 30))
-                        .waitSeconds(0.3)
-                        .strafeTo(new Vector2d(30, 0))
-                        .waitSeconds(0.3)
-                        .strafeTo(new Vector2d(0, 0))
-                        .waitSeconds(0.3)
-                        .strafeTo(new Vector2d(30, 0))
-                        .waitSeconds(0.3)
-                        .strafeTo(new Vector2d(30, -30))
+                        .strafeTo(new Vector2d(-31, 31))
+                        .waitSeconds(0.2)
+                        .strafeTo(new Vector2d(-20, 20))
+                        .splineToConstantHeading(new Vector2d(-11.41, 54.69), (Math.toRadians(90.00)), new TranslationalVelConstraint(35))
+                        .strafeTo(new Vector2d(-31, 31), new TranslationalVelConstraint(75))
 
 
                         .build());

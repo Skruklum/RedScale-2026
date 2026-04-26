@@ -1,7 +1,9 @@
 package com.example.meepmeeptesting;
 
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.TranslationalVelConstraint;
 import com.acmerobotics.roadrunner.Vector2d;
+import com.acmerobotics.roadrunner.VelConstraint;
 import com.noahbres.meepmeep.MeepMeep;
 import com.noahbres.meepmeep.roadrunner.DefaultBotBuilder;
 import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
@@ -26,23 +28,19 @@ public class MeepMeepTesting2 {
                 .build();
 
         // Using the mirror functions to flip the original path
-        myBot.runAction(myBot.getDrive().actionBuilder(new Pose2d(-70, 29, Math.toRadians(90)))
-                        .strafeTo(new Vector2d(-29.51, 31.48))
-                        .strafeTo(new Vector2d(-15, 15))
-
-                        .splineToConstantHeading(new Vector2d(-20, 31.67), Math.toRadians(90))
-                        .splineToConstantHeading(new Vector2d(-20, 55.28), Math.toRadians(90))
-                        .strafeTo(new Vector2d(-29.51, 31.48))
-
-                        .splineToConstantHeading(new Vector2d(2, 31.67), Math.toRadians(90))
-                        .splineToConstantHeading(new Vector2d(2, 55.28), Math.toRadians(90))
-                        .strafeTo(new Vector2d(-29.51, 31.48))
-                        .waitSeconds(0.1)
-
-                        .splineToConstantHeading(new Vector2d(28, 31.67), Math.toRadians(90))
-                        .splineToConstantHeading(new Vector2d(28, 55.28), Math.toRadians(90))
-                        .strafeTo(new Vector2d(-29.51, 31.48))
-                        .waitSeconds(0.1)
+        myBot.runAction(myBot.getDrive().actionBuilder(new Pose2d(-48, 48, Math.toRadians(135)))
+                        .strafeTo(new Vector2d(-12, 12))
+                        .waitSeconds(0.5)
+                        .strafeToLinearHeading(new Vector2d(-11, 26), Math.toRadians(90), new TranslationalVelConstraint(45))
+                        .strafeToLinearHeading(new Vector2d(-11, 56), Math.toRadians(90), new TranslationalVelConstraint(75))
+                        .waitSeconds(0.5)
+                        .strafeToLinearHeading(new Vector2d(-12, 12), Math.toRadians(135), new TranslationalVelConstraint(95))
+                        .splineToLinearHeading(new Pose2d(13.18, 22.62, Math.toRadians(90.00)), Math.toRadians(90.00))
+                        .strafeToLinearHeading(new Vector2d(12, 56), Math.toRadians(90), new TranslationalVelConstraint(75))
+                        .strafeToLinearHeading(new Vector2d(-12, 12), Math.toRadians(135), new TranslationalVelConstraint(95))
+                        .splineToLinearHeading(new Pose2d(36, 27, Math.toRadians(90.00)), Math.toRadians(90.00))
+                        .strafeToLinearHeading(new Vector2d(36, 57), Math.toRadians(90), new TranslationalVelConstraint(75))
+                        .strafeToLinearHeading(new Vector2d(-12, 12), Math.toRadians(135), new TranslationalVelConstraint(95))
 
                         .build());
 

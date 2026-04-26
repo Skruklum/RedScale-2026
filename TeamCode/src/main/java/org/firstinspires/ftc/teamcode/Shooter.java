@@ -9,109 +9,70 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
-import org.firstinspires.ftc.teamcode.controllers.PIDCoefficients;
-import org.firstinspires.ftc.teamcode.controllers.PIDFController;
-
 public class Shooter {
-    private DcMotorEx shooterMotor;
+    private DcMotorEx shooter1Motor;
+    private DcMotorEx shooter2Motor;
 
-    // Constants for HD Hex (No Gearbox)
+    // Constants
     private static final double TICKS_PER_REV = 28.0;
-    private static final double TARGET_RPM = 2900.0;
-    // (3000 / 60) * 28 = 1400 ticks/sec
+    private static final double TARGET_RPM = 5750;
     private static final double TARGET_VELO = (TARGET_RPM / 60.0) * TICKS_PER_REV;
 
-    // ---------------- SHOOTER PIDF ----------------
-
-    public static double PID_P = 20; // prev 20/60
+    // Tuning constants - Adjust PID_F if motors don't reach 6000 RPM
+    public static double PID_P = 20.0;
     public static double PID_I = 0.0;
     public static double PID_D = 0.0;
-    public static double PID_F = 14.5; // prev 14.5/17.5
+    public static double PID_F = 14.5;
     PIDFCoefficients ShooterPIDF = new PIDFCoefficients(PID_P, PID_I, PID_D, PID_F);
 
-    private boolean isActive = true;
-
-    public static double P = 0;
-    public static double F = 0.00017;
-    public static PIDCoefficients coeffs = new PIDCoefficients(P, 0, 0.003, 0.0003, 0, 0.001);
-    public static PIDFController pidfController = new PIDFController(coeffs, (d, v) -> {
-        if (v != null) {
-            return v*F;
-        }
-        return 0;
-    });
-
-
     public Shooter(HardwareMap hardwareMap) {
-        shooterMotor = hardwareMap.get(DcMotorEx.class, "shooter");
-        shooterMotor.setDirection(DcMotor.Direction.REVERSE);
+        shooter1Motor = hardwareMap.get(DcMotorEx.class, "shooter1");
+        shooter2Motor = hardwareMap.get(DcMotorEx.class, "shooter2");
 
-        // Essential for setVelocity() to work
-        shooterMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, ShooterPIDF);
+        // Assuming motors face each other; one usually needs to be REVERSE
+        // Adjust these based on your mechanical orientation
+        shooter1Motor.setDirection(DcMotor.Direction.FORWARD);
+        shooter2Motor.setDirection(DcMotor.Direction.REVERSE);
 
-        // Use FLOAT for shooters to prevent mechanical shock when stopping
-        shooterMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.FLOAT);
+        // Apply PIDF for velocity control
+        shooter1Motor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, ShooterPIDF);
+        shooter2Motor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, ShooterPIDF);
+
+        // FLOAT prevents jerky stops which can damage gears/belts
+        shooter1Motor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.FLOAT);
+        shooter2Motor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.FLOAT);
     }
 
-    public void setInactive() {
-        this.isActive = false;
-    }
-
-    public void setActive() {
-        this.isActive = true;
-    }
-
-
-    public void setVelocity(double targetVelocity) {
-        pidfController.targetVelocity = targetVelocity;
-    }
-
-    public void setPosition(double targetPosition) {
-        pidfController.targetPosition = targetPosition;
-    }
-
-    public void update() {
-        if (!isActive) {
-            double power = pidfController.update(System.nanoTime(), 0, shooterMotor.getVelocity());
-            shooterMotor.setPower(power);
-        }
-    }
-
-    public double getVelocity() {
-        return shooterMotor.getVelocity();
-    }
-
-    // Roadrunner Action to toggle the motor
+    // Action to turn both motors ON or OFF
     public Action setState(boolean on) {
         return new Action() {
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
                 if (on) {
-                    shooterMotor.setVelocity(TARGET_VELO);
+                    shooter1Motor.setVelocity(TARGET_VELO);
+                    shooter2Motor.setVelocity(TARGET_VELO);
                 } else {
-                    shooterMotor.setVelocity(0);
+                    shooter1Motor.setVelocity(0);
+                    shooter2Motor.setVelocity(0);
                 }
-
-
-                return false; // Action finishes immediately
+                return false;
             }
         };
     }
 
-    // Roadrunner Action that blocks until RPM is within 5% of target
+    // Blocks the sequence until BOTH motors are at 95% speed
     public Action waitUntilReady() {
         return new Action() {
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
-                double currentVelo = shooterMotor.getVelocity();
-                double currentRPM = (currentVelo * 60.0) / 28.0;
+                double rpm1 = (shooter1Motor.getVelocity() * 60.0) / TICKS_PER_REV;
+                double rpm2 = (shooter2Motor.getVelocity() * 60.0) / TICKS_PER_REV;
 
-                // These will show up on your Driver Hub while it waits
-                packet.put("Live RPM", String.format("%.0f", currentRPM));
-                packet.put("Status", "Waiting for spin-up...");
+                packet.put("Shooter 1 RPM", String.format("%.0f", rpm1));
+                packet.put("Shooter 2 RPM", String.format("%.0f", rpm2));
 
-                // Keeps running (returning true) until we are at 95% of 3000 RPM
-                return currentRPM < (TARGET_RPM * 0.95);
+                // Returns true to keep waiting if either motor is too slow
+                return (rpm1 < (TARGET_RPM * 0.95)) || (rpm2 < (TARGET_RPM * 0.95));
             }
         };
     }

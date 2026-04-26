@@ -24,7 +24,7 @@ public class RsudAngleFixIniYangBenerCoHold2 extends LinearOpMode {
     private DcMotorEx shooterTop, shooterBottom;
     private DcMotorEx frontLeft, frontRight, backLeft, backRight;
     private CRServo leftServo;
-    private Servo shooterServo;
+    private CRServo shooterServo;
     private IMU imu;
     private ColorSensor colorSensor;
     private CRServo stopperServo;
@@ -71,7 +71,7 @@ public class RsudAngleFixIniYangBenerCoHold2 extends LinearOpMode {
         shooterBottom = hardwareMap.get(DcMotorEx.class, "shooter2");
 
         leftServo    = hardwareMap.get(CRServo.class, "lServo");
-        shooterServo = hardwareMap.get(Servo.class, "sServo");
+        shooterServo = hardwareMap.get(CRServo.class, "angleServo");
         stopperServo = hardwareMap.get(CRServo.class, "stopServo");
 
         frontLeft  = hardwareMap.get(DcMotorEx.class, "front_left_drive");
@@ -195,9 +195,9 @@ public class RsudAngleFixIniYangBenerCoHold2 extends LinearOpMode {
             }
 
             // ===== SHOOTER ANGLE SERVO =====
-            if (gamepad2.x)      setServoDegrees(0);
-            else if (gamepad2.y) setServoDegrees(45);
-            else if (gamepad2.b) setServoDegrees(90);
+            if (gamepad2.dpad_up)      shooterServo.setPower(1);
+            else if (gamepad2.dpad_down) shooterServo.setPower(-1);
+            else shooterServo.setPower(0);
 
             // ===== DRIVE =====
             double y  = -gamepad1.left_stick_y;
@@ -303,7 +303,5 @@ public class RsudAngleFixIniYangBenerCoHold2 extends LinearOpMode {
     /**
      * Sets the shooter angle servo position from a degree value (0–180).
      */
-    private void setServoDegrees(double deg) {
-        shooterServo.setPosition(Math.min(1.0, Math.max(0.0, deg / 180.0)));
-    }
+
 }

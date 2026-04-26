@@ -11,7 +11,7 @@ public class Stopper {
     private CRServo stopperServo;
 
     public Stopper(HardwareMap hardwareMap) {
-        stopperServo = hardwareMap.get(CRServo.class, "stopper");
+        stopperServo = hardwareMap.get(CRServo.class, "stopServo");
         stopperServo.setDirection(DcMotor.Direction.FORWARD);
     }
 
@@ -27,7 +27,7 @@ public class Stopper {
 
                 long elapsedTime = System.currentTimeMillis() - startTime;
 
-                if (elapsedTime < 500) {
+                if (elapsedTime < 750) {
                     stopperServo.setPower(power);
                     packet.put("Stopper Status", power > 0 ? "Forward" : "Reverse");
                     packet.put("Stopper Time Left", (500 - elapsedTime) / 1000.0);

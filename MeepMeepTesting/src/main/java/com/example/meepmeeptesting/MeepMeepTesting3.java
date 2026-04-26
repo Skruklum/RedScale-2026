@@ -16,15 +16,24 @@ public class MeepMeepTesting3 {
                 .build();
 
 
-        myBot.runAction(myBot.getDrive().actionBuilder(new Pose2d(-61.85, 32.01, Math.toRadians(90)))
-                .strafeTo(new Vector2d(-33, 28))
-                        .waitSeconds(0.1)
-                .splineToConstantHeading(new Vector2d(12.00, 23.80), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(12.00, 50.80), Math.toRadians(90), new TranslationalVelConstraint(25))
-                        .waitSeconds(0.1)
-                        .setReversed(true)
-                .splineToConstantHeading(new Vector2d(12.00, 23.80), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(-10.82, 24.2), Math.toRadians(90)) // Angle : 59.071675968
+        myBot.runAction(myBot.getDrive().actionBuilder(new Pose2d(-48, 48, Math.toRadians(135)))
+                .strafeTo(new Vector2d(-12, 12))
+                    .waitSeconds(0.5)
+
+                .strafeToLinearHeading(new Vector2d(-11, 26), Math.toRadians(90), new TranslationalVelConstraint(45))
+                .strafeToLinearHeading(new Vector2d(-11, 56), Math.toRadians(90), new TranslationalVelConstraint(75))
+                .strafeToLinearHeading(new Vector2d(-12, 12), Math.toRadians(135), new TranslationalVelConstraint(125))
+                    .waitSeconds(0.5)
+
+                .splineToLinearHeading(new Pose2d(13.18, 22.62, Math.toRadians(90.00)), Math.toRadians(90.00))
+                .strafeToLinearHeading(new Vector2d(12, 56), Math.toRadians(90), new TranslationalVelConstraint(75))
+                .strafeToLinearHeading(new Vector2d(-12, 12), Math.toRadians(135), new TranslationalVelConstraint(125))
+
+                    .waitSeconds(0.5)
+                .strafeToLinearHeading(new Vector2d(36, 27), Math.toRadians(90.00))
+                .strafeToLinearHeading(new Vector2d(36, 57), Math.toRadians(90), new TranslationalVelConstraint(75))
+                .strafeToLinearHeading(new Vector2d(-12, 12), Math.toRadians(135), new TranslationalVelConstraint(125))
+
 
 
 

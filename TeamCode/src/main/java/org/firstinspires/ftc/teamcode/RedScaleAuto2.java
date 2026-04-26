@@ -100,27 +100,27 @@ public class RedScaleAuto2 extends LinearOpMode {
 
         boolean running = true;
         while (running && !Thread.currentThread().isInterrupted()) {
-            TelemetryPacket packet = new TelemetryPacket();
-//            packet.fieldOverlay().getOperations().addAll(previewCanvas.getOperations());
-            packet.put("time", opModeTime);
-
-            robotPoseController.update();
-
-            running = action.run(packet);
-
-            Pose2d pose = drive.localizer.getPose();
-
-            packet.fieldOverlay().setStroke("#3F51B5");
-            Drawing.drawRobot(packet.fieldOverlay(), pose);
-            FtcDashboard.getInstance().sendTelemetryPacket(packet);
-
-            telemetry.addData("Shooter Current Velocity", shooter.getVelocity());
-            telemetry.update();
-
-//            extendo.runAuto();
-//            lifter.runAuto();
-////            lifter.sendTelemetryAuto(packet);
-//            dash.sendTelemetryPacket(packet);
+//            TelemetryPacket packet = new TelemetryPacket();
+////            packet.fieldOverlay().getOperations().addAll(previewCanvas.getOperations());
+//            packet.put("time", opModeTime);
+//
+//            robotPoseController.update();
+//
+//            running = action.run(packet);
+//
+//            Pose2d pose = drive.localizer.getPose();
+//
+//            packet.fieldOverlay().setStroke("#3F51B5");
+//            Drawing.drawRobot(packet.fieldOverlay(), pose);
+//            FtcDashboard.getInstance().sendTelemetryPacket(packet);
+//
+//            telemetry.addData("Shooter Current Velocity", shooter.getVelocity());
+//            telemetry.update();
+//
+////            extendo.runAuto();
+////            lifter.runAuto();
+//////            lifter.sendTelemetryAuto(packet);
+////            dash.sendTelemetryPacket(packet);
         }
     }
 

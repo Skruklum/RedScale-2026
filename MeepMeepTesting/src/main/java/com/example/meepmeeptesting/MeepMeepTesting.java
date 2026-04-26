@@ -16,24 +16,13 @@ public class MeepMeepTesting {
                 .setConstraints(120, 100, Math.toRadians(180), Math.toRadians(180), 15)
                 .build();
 
-        myBot.runAction(myBot.getDrive().actionBuilder(new Pose2d(-70, 29, Math.toRadians(90)))
-                .strafeTo(new Vector2d(-33, 27))
-                .strafeTo(new Vector2d(-15, 7.5))
+        myBot.runAction(myBot.getDrive().actionBuilder(new Pose2d(-60, 35, Math.toRadians(90)))
+                        .strafeToLinearHeading(new Vector2d(-11.61, 12.0), Math.toRadians(135))
+                        .waitSeconds(0.5)
+                        .turnTo(Math.toRadians(90))
+                        .strafeTo(new Vector2d(-11.41, 54.69), new TranslationalVelConstraint(45))
+                        .strafeTo(new Vector2d(-11.61, 12.0))
 
-                .splineToConstantHeading(new Vector2d(-20, 31.67), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(-20, 55.28), Math.toRadians(90), new TranslationalVelConstraint(20))
-                .strafeTo(new Vector2d(-33, 27))
-                .waitSeconds(0.1)
-
-                .splineToConstantHeading(new Vector2d(2, 20), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(2, 55.28), Math.toRadians(90), new TranslationalVelConstraint(20))
-                .strafeTo(new Vector2d(-33, 27))
-                .waitSeconds(0.1)
-
-                .splineToConstantHeading(new Vector2d(28, 20), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(28, 55.28), Math.toRadians(90), new TranslationalVelConstraint(20))
-                .strafeTo(new Vector2d(-33, 27))
-                .waitSeconds(0.1)
 
                 .build());
 
