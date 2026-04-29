@@ -7,7 +7,7 @@ import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-@Autonomous(name = "Red/Blue Selectable Auto", group = "Autonomous")
+@Autonomous(name = "Autonomous Houston PILIH INI, Pencet kotak buat ganti tim", group = "Autonomous")
 public class RedScaleAutoFull extends LinearOpMode {
 
     // Selection state
